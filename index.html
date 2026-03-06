@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Caisse LUMIIA</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0e0e;
+    --surface: #1a1a1a;
+    --surface2: #242424;
+    --border: #333;
+    --accent: #f0c040;
+    --green: #3ecf6a;
+    --red: #e05050;
+    --blue: #60b8f0;
+    --text: #f0ede8;
+    --muted: #888;
+    --mono: 'Share Tech Mono', monospace;
+    --sans: 'Barlow Condensed', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: #080808;
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+
+  .app-wrapper {
+    max-width: 800px;
+    margin: 0 auto;
+    position: relative;
+    min-height: 100dvh;
+    background: var(--bg);
+  }
+
+  .summary-bar {
+    max-width: 800px !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%);
+  }
+
+  header {
+    background: var(--surface);
+    border-bottom: 2px solid var(--accent);
+    padding: 14px 16px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    max-width: 800px;
+  }
+
+  .logo {
+    font-family: var(--sans);
+    font-weight: 900;
+    font-size: 22px;
+    letter-spacing: 3px;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+
+  .logo span {
+    color: var(--muted);
+    font-size: 11px;
+    display: block;
+    letter-spacing: 2px;
+    font-weight: 400;
+    margin-top: -2px;
+  }
+
+  .header-total { text-align: right; font-family: var(--mono); }
+  .header-total .label { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+  .header-total .amount { font-size: 22px; color: var(--accent); line-height: 1; }
+
+  /* CONFIG */
+  .config-panel {
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .config-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .config-row label {
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--muted);
+    text-transform: uppercase;
+    white-space: nowrap;
+    min-width: 90px;
+  }
+
+  .input-euro {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding-right: 10px;
+    transition: border-color .2s;
+  }
+
+  .input-euro:focus-within { border-color: var(--accent); }
+
+  .input-euro input {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 17px;
+    padding: 7px 6px 7px 10px;
+    width: 100%;
+    text-align: right;
+    outline: none;
+  }
+
+  .input-euro .euro { font-family: var(--mono); font-size: 14px; color: var(--muted); }
+
+  .config-divider { height: 1px; background: var(--border); margin: 2px 0; }
+
+  /* RECAP */
+  .recap-block {
+    margin: 10px 16px 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .recap-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    border-bottom: 1px solid #1f1f1f;
+  }
+
+  .recap-row:last-child { border-bottom: none; }
+  .recap-row .rl { font-size: 12px; letter-spacing: 1px; color: var(--muted); text-transform: uppercase; }
+  .recap-row .rv { font-family: var(--mono); font-size: 17px; }
+  .recap-row .rv.accent { color: var(--accent); }
+  .recap-row .rv.blue   { color: var(--blue); }
+
+  /* ÉCART */
+  .ecart-banner {
+    margin: 8px 16px 0;
+    border-radius: 8px;
+    padding: 13px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    transition: border-color .3s, background .3s;
+  }
+
+  .ecart-banner.positive { border-color: var(--green); background: #0e2016; }
+  .ecart-banner.negative { border-color: var(--red);   background: #200e0e; }
+  .ecart-banner.zero     { border-color: var(--green); background: #0e2016; }
+
+  .ecart-label .title    { font-size: 12px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
+  .ecart-label .subtitle { font-size: 10px; color: #666; letter-spacing: 1px; display: block; margin-top: 2px; }
+
+  .ecart-value { font-family: var(--mono); font-size: 30px; font-weight: 700; transition: color .3s; }
+  .ecart-value.positive { color: var(--green); }
+  .ecart-value.negative { color: var(--red); }
+  .ecart-value.zero     { color: var(--green); }
+
+  /* SECTION */
+  .section-title {
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    text-transform: uppercase;
+    padding: 16px 16px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* DENOM */
+  .denom-list { padding: 6px 0 10px; }
+
+  .cat-sep {
+    background: var(--surface2);
+    padding: 6px 16px;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: #555;
+    text-transform: uppercase;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    margin-top: 4px;
+  }
+
+  .denom-row {
+    display: grid;
+    grid-template-columns: 58px 1fr 80px;
+    align-items: center;
+    padding: 8px 16px;
+    border-bottom: 1px solid #1f1f1f;
+    gap: 10px;
+  }
+
+  .denom-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 36px;
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .denom-badge.coin { background: #2a2210; border: 1px solid #5a4010; color: var(--accent); }
+  .denom-badge.bill { background: #122a18; border: 1px solid #1a5028; color: var(--green); }
+
+  .counter {
+    display: flex;
+    align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    height: 44px;
+  }
+
+  .counter button {
+    background: var(--surface2);
+    border: none;
+    color: var(--text);
+    font-size: 22px;
+    width: 44px;
+    height: 44px;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .counter button:active { background: #3a3a3a; }
+  .counter button.minus { border-right: 1px solid var(--border); }
+  .counter button.plus  { border-left:  1px solid var(--border); }
+
+  .counter input {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 20px;
+    text-align: center;
+    width: 100%;
+    outline: none;
+  }
+
+  .counter input::-webkit-outer-spin-button,
+  .counter input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+  .denom-subtotal { font-family: var(--mono); font-size: 15px; text-align: right; color: var(--muted); }
+  .denom-subtotal.nonzero { color: var(--accent); }
+
+  /* SUMMARY BAR */
+  .summary-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--surface);
+    border-top: 2px solid var(--border);
+    padding: 10px 16px 16px;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .sum-row { display: flex; justify-content: space-between; align-items: center; }
+  .sum-row .sl { font-size: 11px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
+  .sum-row .sv { font-family: var(--mono); font-size: 16px; color: var(--accent); }
+
+  .btn-reset {
+    width: 100%;
+    margin-top: 4px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: var(--sans);
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 9px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .btn-reset:active { background: #2a1010; border-color: var(--red); color: var(--red); }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.75);
+    z-index: 200;
+    align-items: flex-end;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border-top: 2px solid var(--red);
+    border-radius: 12px 12px 0 0;
+    padding: 24px 20px 32px;
+    width: 100%;
+    animation: slideUp .25s ease;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(60px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+
+  .modal h3 { font-size: 20px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; color: var(--red); }
+  .modal p  { color: var(--muted); font-size: 14px; margin-bottom: 20px; line-height: 1.5; }
+  .modal-btns { display: flex; gap: 10px; }
+
+  .modal-btns button {
+    flex: 1; padding: 13px; border-radius: 6px;
+    font-family: var(--sans); font-size: 15px; font-weight: 700;
+    letter-spacing: 1px; text-transform: uppercase; cursor: pointer; border: none;
+  }
+
+  .btn-cancel  { background: var(--surface2); color: var(--muted); }
+  .btn-confirm { background: var(--red); color: #fff; }
+</style>
+</head>
+<body>
+<div class="app-wrapper">
+
+<header>
+  <div class="logo">LUMIIA<span>Caisse du soir</span></div>
+  <div class="header-total">
+    <div class="label">Total compté</div>
+    <div class="amount" id="headerTotal">0,00 €</div>
+  </div>
+</header>
+
+<div class="config-panel">
+  <div class="config-row">
+    <label>Fond caisse</label>
+    <div class="input-euro">
+      <input type="number" id="fondCaisse" value="300" inputmode="decimal" min="0">
+      <span class="euro">€</span>
+    </div>
+  </div>
+  <div class="config-divider"></div>
+  <div class="config-row">
+    <label>Z Caisse 1</label>
+    <div class="input-euro">
+      <input type="number" id="zCaisse1" placeholder="0" inputmode="decimal" min="0">
+      <span class="euro">€</span>
+    </div>
+  </div>
+  <div class="config-row">
+    <label>Z Caisse 2</label>
+    <div class="input-euro">
+      <input type="number" id="zCaisse2" placeholder="0" inputmode="decimal" min="0">
+      <span class="euro">€</span>
+    </div>
+  </div>
+</div>
+
+<div class="recap-block">
+  <div class="recap-row">
+    <span class="rl">Fond de caisse</span>
+    <span class="rv" id="recapFdc">300,00 €</span>
+  </div>
+  <div class="recap-row">
+    <span class="rl">Z Caisse 1 + 2</span>
+    <span class="rv blue" id="recapZ">0,00 €</span>
+  </div>
+  <div class="recap-row">
+    <span class="rl">↳ Total attendu</span>
+    <span class="rv accent" id="recapAttendu">300,00 €</span>
+  </div>
+</div>
+
+<div class="ecart-banner zero" id="ecartBanner">
+  <div class="ecart-label">
+    <span class="title">Écart</span>
+    <span class="subtitle" id="ecartSub">compté − attendu</span>
+  </div>
+  <div class="ecart-value zero" id="ecartValue">0,00 €</div>
+</div>
+
+<div class="section-title">Comptage des espèces</div>
+<div class="denom-list" id="denomList"></div>
+
+<div class="summary-bar">
+  <div class="sum-row">
+    <span class="sl">Pièces</span>
+    <span class="sv" id="totalCoins">0,00 €</span>
+  </div>
+  <div class="sum-row">
+    <span class="sl">Billets</span>
+    <span class="sv" id="totalBills">0,00 €</span>
+  </div>
+  <button class="btn-reset" id="btnReset">↺ Réinitialiser</button>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h3>Réinitialiser ?</h3>
+    <p>Tous les comptages seront remis à zéro. Le fond de caisse et les Z seront conservés.</p>
+    <div class="modal-btns">
+      <button class="btn-cancel" id="btnCancel">Annuler</button>
+      <button class="btn-confirm" id="btnConfirm">Remettre à zéro</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const DENOMS = [
+  { value: 0.01, label: '1 ct',   type: 'coin' },
+  { value: 0.02, label: '2 cts',  type: 'coin' },
+  { value: 0.05, label: '5 cts',  type: 'coin' },
+  { value: 0.10, label: '10 cts', type: 'coin' },
+  { value: 0.20, label: '20 cts', type: 'coin' },
+  { value: 0.50, label: '50 cts', type: 'coin' },
+  { value: 1,    label: '1 €',    type: 'coin' },
+  { value: 2,    label: '2 €',    type: 'coin' },
+  { value: 5,    label: '5 €',    type: 'bill' },
+  { value: 10,   label: '10 €',   type: 'bill' },
+  { value: 20,   label: '20 €',   type: 'bill' },
+  { value: 50,   label: '50 €',   type: 'bill' },
+  { value: 100,  label: '100 €',  type: 'bill' },
+  { value: 200,  label: '200 €',  type: 'bill' },
+  { value: 500,  label: '500 €',  type: 'bill' },
+];
+
+const counts = new Array(DENOMS.length).fill(0);
+
+function fmt(n) {
+  const abs = Math.abs(n);
+  const str = abs.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return (n < -0.004 ? '−' : '') + str + ' €';
+}
+
+function fmtSigned(n) {
+  if (Math.abs(n) < 0.005) return fmt(0);
+  const str = Math.abs(n).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return (n > 0 ? '+' : '−') + str + ' €';
+}
+
+function getNum(id) {
+  return Math.max(0, parseFloat(document.getElementById(id).value) || 0);
+}
+
+function buildList() {
+  const list = document.getElementById('denomList');
+  let lastType = null;
+
+  DENOMS.forEach((d, i) => {
+    if (d.type !== lastType) {
+      const sep = document.createElement('div');
+      sep.className = 'cat-sep';
+      sep.textContent = d.type === 'coin' ? '● Pièces' : '■ Billets';
+      list.appendChild(sep);
+      lastType = d.type;
+    }
+
+    const row = document.createElement('div');
+    row.className = 'denom-row';
+    row.innerHTML = `
+      <div class="denom-badge ${d.type}">${d.label}</div>
+      <div class="counter">
+        <button class="minus" data-i="${i}">−</button>
+        <input type="number" inputmode="numeric" min="0" value="0" data-i="${i}" id="inp-${i}">
+        <button class="plus" data-i="${i}">+</button>
+      </div>
+      <div class="denom-subtotal" id="sub-${i}">0,00 €</div>
+    `;
+    list.appendChild(row);
+  });
+
+  list.querySelectorAll('button.plus').forEach(btn => {
+    btn.addEventListener('click', () => { const i = +btn.dataset.i; setCount(i, counts[i] + 1); });
+  });
+  list.querySelectorAll('button.minus').forEach(btn => {
+    btn.addEventListener('click', () => { const i = +btn.dataset.i; setCount(i, Math.max(0, counts[i] - 1)); });
+  });
+  list.querySelectorAll('input[type=number]').forEach(inp => {
+    inp.addEventListener('change', () => {
+      const i = +inp.dataset.i;
+      setCount(i, Math.max(0, Math.floor(+inp.value || 0)));
+    });
+    inp.addEventListener('focus', () => inp.select());
+  });
+}
+
+function setCount(i, val) {
+  counts[i] = val;
+  const inp = document.getElementById('inp-' + i);
+  if (inp) inp.value = val;
+  updateRow(i);
+  updateTotals();
+}
+
+function updateRow(i) {
+  const sub = document.getElementById('sub-' + i);
+  const total = counts[i] * DENOMS[i].value;
+  sub.textContent = fmt(total);
+  sub.className = 'denom-subtotal' + (counts[i] > 0 ? ' nonzero' : '');
+}
+
+function updateTotals() {
+  let coins = 0, bills = 0;
+  DENOMS.forEach((d, i) => {
+    const t = counts[i] * d.value;
+    if (d.type === 'coin') coins += t; else bills += t;
+  });
+
+  const totalCompte = coins + bills;
+  const fdc     = getNum('fondCaisse');
+  const z1      = getNum('zCaisse1');
+  const z2      = getNum('zCaisse2');
+  const zTotal  = z1 + z2;
+  const attendu = fdc + zTotal;
+  const ecart   = totalCompte - attendu;
+
+  document.getElementById('headerTotal').textContent    = fmt(totalCompte);
+  document.getElementById('totalCoins').textContent     = fmt(coins);
+  document.getElementById('totalBills').textContent     = fmt(bills);
+  document.getElementById('recapFdc').textContent       = fmt(fdc);
+  document.getElementById('recapZ').textContent         = fmt(zTotal);
+  document.getElementById('recapAttendu').textContent   = fmt(attendu);
+
+  const ecartEl  = document.getElementById('ecartValue');
+  const bannerEl = document.getElementById('ecartBanner');
+  const subEl    = document.getElementById('ecartSub');
+
+  let cls;
+  if (Math.abs(ecart) < 0.005) {
+    cls = 'zero';
+    subEl.textContent = '✓ Caisse équilibrée';
+  } else if (ecart > 0) {
+    cls = 'positive';
+    subEl.textContent = 'Surplus en caisse';
+  } else {
+    cls = 'negative';
+    subEl.textContent = 'Manquant en caisse';
+  }
+
+  ecartEl.textContent = fmtSigned(ecart);
+  ecartEl.className   = 'ecart-value ' + cls;
+  bannerEl.className  = 'ecart-banner ' + cls;
+}
+
+function reset() {
+  for (let i = 0; i < counts.length; i++) {
+    counts[i] = 0;
+    const inp = document.getElementById('inp-' + i);
+    if (inp) inp.value = 0;
+    updateRow(i);
+  }
+  updateTotals();
+}
+
+['fondCaisse', 'zCaisse1', 'zCaisse2'].forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener('input', updateTotals);
+  el.addEventListener('focus', function() { this.select(); });
+});
+
+document.getElementById('btnReset').addEventListener('click', () =>
+  document.getElementById('modalOverlay').classList.add('open'));
+document.getElementById('btnCancel').addEventListener('click', () =>
+  document.getElementById('modalOverlay').classList.remove('open'));
+document.getElementById('btnConfirm').addEventListener('click', () => {
+  document.getElementById('modalOverlay').classList.remove('open');
+  reset();
+});
+document.getElementById('modalOverlay').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('open');
+});
+
+buildList();
+updateTotals();
+
+// Dynamic bottom padding so last rows scroll above the fixed bar on all browsers
+function adjustPadding() {
+  const bar = document.querySelector('.summary-bar');
+  const list = document.getElementById('denomList');
+  if (bar && list) {
+    list.style.paddingBottom = (bar.offsetHeight + 20) + 'px';
+  }
+}
+adjustPadding();
+window.addEventListener('resize', adjustPadding);
+</script>
+</div>
+</body>
+</html>
