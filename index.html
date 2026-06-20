@@ -710,34 +710,18 @@ document.getElementById('btnDeleteAll').addEventListener('click', () => {
 });
 
 
-// ── FOND DE CAISSE PAR DÉFAUT (localStorage) ──
-const FDC_KEY = 'lumiia_fdc_default';
-
-// Load saved default on startup
-(function() {
-  const saved = localStorage.getItem(FDC_KEY);
-  const fdcInput = document.getElementById('fondCaisse');
-  const fdcDefaultInput = document.getElementById('fdcDefault');
-  if (saved !== null) {
-    fdcInput.value = saved;
-    fdcDefaultInput.value = saved;
-    updateTotals();
-  } else {
-    fdcDefaultInput.value = fdcInput.value;
-  }
-})();
+// ── FOND DE CAISSE PAR DÉFAUT (Firebase) ──
+// Loaded from Firebase once ready — see module script above
 
 document.getElementById('btnSaveFdc').addEventListener('click', () => {
   const val = parseFloat(document.getElementById('fdcDefault').value) || 0;
-  localStorage.setItem(FDC_KEY, val);
-  // Also update the active caisse input
+  if (window.saveFdcDefault) window.saveFdcDefault(val);
   document.getElementById('fondCaisse').value = val;
   updateTotals();
-  // Show confirmation
   const msg = document.getElementById('fdcSavedMsg');
-  msg.textContent = '✓ Enregistré';
+  msg.textContent = '✓ Enregistré sur tous les appareils';
   msg.style.opacity = '1';
-  setTimeout(() => { msg.style.opacity = '0'; }, 2000);
+  setTimeout(() => { msg.style.opacity = '0'; }, 2500);
 });
 
 </script>
@@ -746,7 +730,7 @@ document.getElementById('btnSaveFdc').addEventListener('click', () => {
 <div class="app-wrapper">
 
 <header>
-  <div class="logo">LUMIIA<span>Caisse du soir — v6</span></div>
+  <div class="logo">LUMIIA<span>Caisse du soir — v7</span></div>
   <div class="header-total">
     <div class="label">Total compté</div>
     <div class="amount" id="headerTotal">0,00 €</div>
