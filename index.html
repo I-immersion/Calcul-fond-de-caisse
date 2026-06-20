@@ -420,14 +420,242 @@
     gap: 8px;
   }
 
+
+  /* ── HISTORIQUE ── */
+  .histo-list {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .histo-empty {
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    letter-spacing: 1px;
+    padding: 20px 0;
+  }
+
+  .histo-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .histo-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .histo-date {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--accent);
+    letter-spacing: 1px;
+  }
+
+  .histo-ecart {
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .histo-ecart.positive { color: var(--green); }
+  .histo-ecart.negative { color: var(--red); }
+  .histo-ecart.zero     { color: var(--muted); }
+
+  .histo-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 12px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .histo-details span { font-family: var(--mono); color: var(--text); }
+
+  .histo-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 8px 0 4px;
+  }
+
+  .btn-delete-all {
+    width: 100%;
+    padding: 10px;
+    background: transparent;
+    border: 1px solid var(--red);
+    color: var(--red);
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 4px;
+    transition: background .2s;
+  }
+
+  .btn-delete-all:active { background: #2a1010; }
+
+  .histo-section-title {
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    text-transform: uppercase;
+    width: 100%;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, push, remove, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBPgjVFKrP80qX_hlfUFqL168XONfNIBA4",
+  authDomain: "lumiia-live.firebaseapp.com",
+  databaseURL: "https://lumiia-live-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "lumiia-live",
+  storageBucket: "lumiia-live.firebasestorage.app",
+  messagingSenderId: "823919513931",
+  appId: "1:823919513931:web:6f6f3c7c6d1699457b18ce"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const HISTO_REF = ref(db, '/caisse_historique');
+
+// ── SAVE snapshot (called on any input change, debounced) ──
+let saveTimer = null;
+window.scheduleSave = function() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    const snap = window.getSnapshot();
+    if (snap.totalCompte === 0) return; // don't save empty
+    // Use today's date as key, overwrite same day
+    const today = new Date().toISOString().slice(0, 10);
+    const dayRef = ref(db, '/caisse_historique/' + today);
+    const { set } = window._fbSet;
+    set(dayRef, snap);
+  }, 2000); // 2s after last input
+};
+
+// Store set for use above
+import { set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+window._fbSet = { set };
+
+// ── LOAD historique ──
+onValue(HISTO_REF, (snapshot) => {
+  const data = snapshot.val();
+  window.renderHistorique(data);
+});
+
+// ── DELETE all ──
+window.deleteHistorique = function() {
+  remove(HISTO_REF);
+};
+
+window._fbReady = true;
+
+// ── SNAPSHOT ──
+window.getSnapshot = function() {
+  let coins = 0, bills = 0;
+  DENOMS.forEach((d, i) => {
+    const t = counts[i] * d.value;
+    if (d.type === 'coin') coins += t; else bills += t;
+  });
+  const totalCompte = coins + bills;
+  const fdc    = Math.max(0, parseFloat(document.getElementById('fondCaisse').value) || 0);
+  const z1     = Math.max(0, parseFloat(document.getElementById('zCaisse1').value) || 0);
+  const z2     = Math.max(0, parseFloat(document.getElementById('zCaisse2').value) || 0);
+  const attendu = fdc + z1 + z2;
+  const ecart   = totalCompte - attendu;
+  return {
+    totalCompte: Math.round(totalCompte * 100) / 100,
+    coins:       Math.round(coins * 100) / 100,
+    bills:       Math.round(bills * 100) / 100,
+    fdc, zSimple: z1, zPrint: z2,
+    attendu:     Math.round(attendu * 100) / 100,
+    ecart:       Math.round(ecart * 100) / 100,
+    ts:          Date.now()
+  };
+};
+
+// ── RENDER HISTORIQUE ──
+window.renderHistorique = function(data) {
+  const list = document.getElementById('histoList');
+  const btnDel = document.getElementById('btnDeleteAll');
+  if (!list) return;
+  if (!data || Object.keys(data).length === 0) {
+    list.innerHTML = '<div class="histo-empty">Aucune soirée enregistrée</div>';
+    if (btnDel) btnDel.style.display = 'none';
+    return;
+  }
+  // Sort by date desc
+  const entries = Object.entries(data).sort((a, b) => b[0].localeCompare(a[0]));
+  if (btnDel) btnDel.style.display = 'block';
+
+  list.innerHTML = entries.map(([date, d]) => {
+    const ecartCls = Math.abs(d.ecart) < 0.01 ? 'zero' : d.ecart > 0 ? 'positive' : 'negative';
+    const ecartTxt = (d.ecart > 0 ? '+' : '') + d.ecart.toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' €';
+    const fmtE = n => n.toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' €';
+    // Format date nicely
+    const [y, m, day] = date.split('-');
+    const dateStr = day + '/' + m + '/' + y;
+    return \`<div class="histo-card">
+      <div class="histo-card-header">
+        <span class="histo-date">\${dateStr}</span>
+        <span class="histo-ecart \${ecartCls}">\${ecartTxt}</span>
+      </div>
+      <div class="histo-details">
+        <div>Compté</div><span>\${fmtE(d.totalCompte)}</span>
+        <div>Attendu</div><span>\${fmtE(d.attendu)}</span>
+        <div>Z Simple</div><span>\${fmtE(d.zSimple||0)}</span>
+        <div>Z Print</div><span>\${fmtE(d.zPrint||0)}</span>
+        <div>Pièces</div><span>\${fmtE(d.coins)}</span>
+        <div>Billets</div><span>\${fmtE(d.bills)}</span>
+      </div>
+    </div>\`;
+  }).join('');
+};
+
+// ── HOOK inputs to trigger save ──
+document.querySelectorAll('input').forEach(inp => {
+  inp.addEventListener('input', () => {
+    if (window.scheduleSave) window.scheduleSave();
+  });
+});
+// Also hook counter buttons
+document.addEventListener('click', (e) => {
+  if (e.target.classList.contains('plus') || e.target.classList.contains('minus')) {
+    if (window.scheduleSave) window.scheduleSave();
+  }
+});
+
+// ── DELETE ALL ──
+document.getElementById('btnDeleteAll').addEventListener('click', () => {
+  if (confirm('Effacer tout l\'historique ?')) {
+    if (window.deleteHistorique) window.deleteHistorique();
+  }
+});
+
+</script>
 </head>
 <body>
 <div class="app-wrapper">
 
 <header>
-  <div class="logo">LUMIIA<span>Caisse du soir — v3</span></div>
+  <div class="logo">LUMIIA<span>Caisse du soir — v4</span></div>
   <div class="header-total">
     <div class="label">Total compté</div>
     <div class="amount" id="headerTotal">0,00 €</div>
@@ -506,6 +734,11 @@
     </div>
     <button class="btn-reset" id="btnReset">↺ Réinitialiser</button>
   </div>
+  <div class="histo-divider"></div>
+  <div class="histo-section-title">Historique des soirées</div>
+  <div class="histo-list" id="histoList"><div class="histo-empty">Aucune soirée enregistrée</div></div>
+  <button class="btn-delete-all" id="btnDeleteAll" style="display:none">🗑 Effacer tout l'historique</button>
+  <div class="histo-divider"></div>
   <div class="qr-label">Accès rapide LUMIIA</div>
   <div class="qr-box"><div id="qrcode"></div></div>
   <div class="qr-url">https://i-immersion.github.io/Calcul-fond-de-caisse/</div>
