@@ -515,6 +515,66 @@
     border-bottom: 1px solid var(--border);
   }
 
+
+  /* ── FDC DEFAULT SETTING ── */
+  .setting-block {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .setting-block-title {
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .setting-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .setting-row label {
+    font-size: 13px;
+    color: var(--text);
+    white-space: nowrap;
+    flex: 1;
+  }
+
+  .btn-save-fdc {
+    padding: 8px 16px;
+    background: var(--accent);
+    color: #0e0e0e;
+    border: none;
+    border-radius: 5px;
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: opacity .2s;
+  }
+
+  .btn-save-fdc:active { opacity: 0.7; }
+
+  .fdc-saved-msg {
+    font-size: 11px;
+    color: var(--green);
+    letter-spacing: 1px;
+    text-align: right;
+    height: 14px;
+    transition: opacity .3s;
+  }
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script type="module">
@@ -649,13 +709,44 @@ document.getElementById('btnDeleteAll').addEventListener('click', () => {
   }
 });
 
+
+// ── FOND DE CAISSE PAR DÉFAUT (localStorage) ──
+const FDC_KEY = 'lumiia_fdc_default';
+
+// Load saved default on startup
+(function() {
+  const saved = localStorage.getItem(FDC_KEY);
+  const fdcInput = document.getElementById('fondCaisse');
+  const fdcDefaultInput = document.getElementById('fdcDefault');
+  if (saved !== null) {
+    fdcInput.value = saved;
+    fdcDefaultInput.value = saved;
+    updateTotals();
+  } else {
+    fdcDefaultInput.value = fdcInput.value;
+  }
+})();
+
+document.getElementById('btnSaveFdc').addEventListener('click', () => {
+  const val = parseFloat(document.getElementById('fdcDefault').value) || 0;
+  localStorage.setItem(FDC_KEY, val);
+  // Also update the active caisse input
+  document.getElementById('fondCaisse').value = val;
+  updateTotals();
+  // Show confirmation
+  const msg = document.getElementById('fdcSavedMsg');
+  msg.textContent = '✓ Enregistré';
+  msg.style.opacity = '1';
+  setTimeout(() => { msg.style.opacity = '0'; }, 2000);
+});
+
 </script>
 </head>
 <body>
 <div class="app-wrapper">
 
 <header>
-  <div class="logo">LUMIIA<span>Caisse du soir — v4</span></div>
+  <div class="logo">LUMIIA<span>Caisse du soir — v6</span></div>
   <div class="header-total">
     <div class="label">Total compté</div>
     <div class="amount" id="headerTotal">0,00 €</div>
@@ -678,14 +769,14 @@ document.getElementById('btnDeleteAll').addEventListener('click', () => {
   </div>
   <div class="config-divider"></div>
   <div class="config-row">
-    <label>Z Caisse Simple</label>
+    <label>TPE 1</label>
     <div class="input-euro">
       <input type="number" id="zCaisse1" placeholder="0" inputmode="decimal" min="0">
       <span class="euro">€</span>
     </div>
   </div>
   <div class="config-row">
-    <label>Z Caisse Print</label>
+    <label>TPE 2</label>
     <div class="input-euro">
       <input type="number" id="zCaisse2" placeholder="0" inputmode="decimal" min="0">
       <span class="euro">€</span>
@@ -699,7 +790,7 @@ document.getElementById('btnDeleteAll').addEventListener('click', () => {
     <span class="rv" id="recapFdc">300,00 €</span>
   </div>
   <div class="recap-row">
-    <span class="rl">Z Caisse Simple + 2</span>
+    <span class="rl">TPE 1 + 2</span>
     <span class="rv blue" id="recapZ">0,00 €</span>
   </div>
   <div class="recap-row">
@@ -733,6 +824,20 @@ document.getElementById('btnDeleteAll').addEventListener('click', () => {
       <span class="sv" id="totalBills">0,00 €</span>
     </div>
     <button class="btn-reset" id="btnReset">↺ Réinitialiser</button>
+  </div>
+  <div class="setting-block">
+    <div class="setting-block-title">⚙ Fond de caisse par défaut</div>
+    <div class="setting-row">
+      <label>Valeur au démarrage</label>
+      <div class="input-euro" style="max-width:130px">
+        <input type="number" id="fdcDefault" inputmode="decimal" min="0" placeholder="300">
+        <span class="euro">€</span>
+      </div>
+    </div>
+    <div class="setting-row" style="justify-content:flex-end; gap:12px">
+      <span class="fdc-saved-msg" id="fdcSavedMsg"></span>
+      <button class="btn-save-fdc" id="btnSaveFdc">Enregistrer</button>
+    </div>
   </div>
   <div class="histo-divider"></div>
   <div class="histo-section-title">Historique des soirées</div>
