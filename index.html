@@ -575,6 +575,28 @@
     transition: opacity .3s;
   }
 
+
+  /* ── CONNEXION VOYANT ── */
+  .conn-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #444;
+    display: inline-block;
+    margin-left: 8px;
+    vertical-align: middle;
+    transition: background .4s;
+    box-shadow: 0 0 0 0 transparent;
+  }
+  .conn-dot.online {
+    background: var(--green);
+    box-shadow: 0 0 6px var(--green);
+  }
+  .conn-dot.offline {
+    background: var(--red);
+    box-shadow: 0 0 6px var(--red);
+  }
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -585,7 +607,7 @@
 <div class="app-wrapper">
 
 <header>
-  <div class="logo">LUMIIA<span>Caisse du soir — v8</span></div>
+  <div class="logo">LUMIIA<span>Caisse du soir — v9 <span class="conn-dot" id="connDot" title="Firebase déconnecté"></span></span></div>
   <div class="header-total">
     <div class="label">Total compté</div>
     <div class="amount" id="headerTotal">0,00 €</div>
@@ -905,6 +927,18 @@ const db = firebase.database();
 
 // ── FOND DE CAISSE PAR DÉFAUT ──
 const fdcRef = db.ref('/caisse_config/fdc_default');
+
+// ── VOYANT CONNEXION ──
+const connDot = document.getElementById('connDot');
+db.ref('.info/connected').on('value', snap => {
+  if (snap.val() === true) {
+    connDot.className = 'conn-dot online';
+    connDot.title = 'Firebase connecté';
+  } else {
+    connDot.className = 'conn-dot offline';
+    connDot.title = 'Firebase déconnecté';
+  }
+});
 fdcRef.once('value').then(snap => {
   const val = snap.val();
   if (val !== null) {
