@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Caisse LUMIIA — Calcul fond de caisse — v9.4 -->
+<!-- Caisse LUMIIA — Calcul fond de caisse — v10.0 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -712,6 +712,113 @@
     border-radius: 8px;
   }
 
+  /* ── v10.0 : 4 onglets ── */
+  .tab-btn { font-size: 11px !important; letter-spacing: 0.8px !important; padding: 11px 3px !important; }
+
+  /* ── v10.0 : saisie TPE ── */
+  .tpe-panel { padding: 12px 16px 40px; display: flex; flex-direction: column; gap: 12px; }
+
+  .tpe-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .tpe-card-title {
+    background: var(--surface2);
+    padding: 8px 14px;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--accent);
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tpe-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 14px;
+    border-bottom: 1px solid #1f1f1f;
+  }
+
+  .tpe-row:last-child { border-bottom: none; }
+
+  .tpe-row label {
+    font-size: 12px;
+    letter-spacing: 1px;
+    color: var(--muted);
+    text-transform: uppercase;
+    white-space: nowrap;
+    min-width: 72px;
+  }
+
+  .tpe-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+  .tpe-dot.esp { background: var(--accent); }
+  .tpe-dot.cb  { background: var(--blue); }
+
+  .ca-block {
+    background: var(--surface);
+    border: 1.5px solid var(--accent);
+    border-radius: 8px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .ca-line { display: flex; justify-content: space-between; align-items: baseline; }
+  .ca-line .cl { font-size: 12px; letter-spacing: 1px; color: var(--muted); text-transform: uppercase; }
+  .ca-line .cv { font-family: var(--mono); font-size: 16px; }
+  .ca-line .cv.esp { color: var(--accent); }
+  .ca-line .cv.cb  { color: var(--blue); }
+  .ca-total { border-top: 1px solid var(--border); padding-top: 8px; }
+  .ca-total .cl { font-size: 13px; color: var(--text); }
+  .ca-total .cv { font-size: 26px; font-weight: 700; color: var(--accent); }
+
+  /* ── v10.0 : répartition ── */
+  .rep-slider.over::-webkit-slider-thumb { background: var(--red); box-shadow: 0 0 0 1px var(--red); }
+  .rep-slider.over::-moz-range-thumb { background: var(--red); }
+  .rep-pct-display.over { color: var(--red); }
+
+  .rep-result.over { border-color: var(--red); background: #200e0e; }
+  .rep-result.over .rrv { color: var(--red); }
+
+  .rep-warning {
+    border: 1.5px solid var(--red);
+    background: #200e0e;
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: #f0b0b0;
+  }
+
+  .rep-warning b { color: var(--red); font-family: var(--mono); }
+
+  .rep-hint {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+    text-align: center;
+    line-height: 1.5;
+  }
+
+  /* ── v10.0 : historique 3 valeurs ── */
+  .histo-card { flex-direction: column; align-items: stretch; gap: 7px; }
+  .histo-top { display: flex; justify-content: space-between; align-items: baseline; }
+  .histo-sub {
+    display: flex;
+    gap: 14px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .histo-sub b { font-weight: 400; }
+  .histo-sub .e { color: var(--accent); }
+  .histo-sub .c { color: var(--blue); }
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -722,40 +829,66 @@
 <div class="app-wrapper">
 
 <header>
-  <div class="logo">LUMIIA<span>Caisse du soir — <span id="verBadge">v9.4</span> <span class="conn-dot" id="connDot" title="Firebase déconnecté"></span></span></div>
+  <div class="logo">LUMIIA<span>Caisse du soir — <span id="verBadge">v10.0</span> <span class="conn-dot" id="connDot" title="Firebase déconnecté"></span></span></div>
   <div class="header-total">
-    <div class="label">Total compté</div>
+    <div class="label">CA de la soirée</div>
     <div class="amount" id="headerTotal">0,00 €</div>
   </div>
 </header>
 
 <nav class="tab-nav">
-  <button class="tab-btn active" data-tab="caisse">⊟ Caisse</button>
-  <button class="tab-btn" data-tab="repart">⚖ Répartition</button>
-  <button class="tab-btn" data-tab="qr">⚙ Settings</button>
+  <button class="tab-btn active" data-tab="tpe">① TPE</button>
+  <button class="tab-btn" data-tab="caisse">② Comptage</button>
+  <button class="tab-btn" data-tab="repart">③ Répartition</button>
+  <button class="tab-btn" data-tab="qr">⚙</button>
 </nav>
 
-<div class="tab-panel active" id="tab-caisse">
+<!-- ============ ① TPE ============ -->
+<div class="tab-panel active" id="tab-tpe">
+<div class="tpe-panel">
+
+  <div class="tpe-card">
+    <div class="tpe-card-title">TPE 1</div>
+    <div class="tpe-row">
+      <span class="tpe-dot esp"></span><label>Espèces</label>
+      <div class="input-euro"><input type="number" id="esp1" placeholder="0" inputmode="decimal" min="0"><span class="euro">€</span></div>
+    </div>
+    <div class="tpe-row">
+      <span class="tpe-dot cb"></span><label>Carte</label>
+      <div class="input-euro"><input type="number" id="cb1" placeholder="0" inputmode="decimal" min="0"><span class="euro">€</span></div>
+    </div>
+  </div>
+
+  <div class="tpe-card">
+    <div class="tpe-card-title">TPE 2</div>
+    <div class="tpe-row">
+      <span class="tpe-dot esp"></span><label>Espèces</label>
+      <div class="input-euro"><input type="number" id="esp2" placeholder="0" inputmode="decimal" min="0"><span class="euro">€</span></div>
+    </div>
+    <div class="tpe-row">
+      <span class="tpe-dot cb"></span><label>Carte</label>
+      <div class="input-euro"><input type="number" id="cb2" placeholder="0" inputmode="decimal" min="0"><span class="euro">€</span></div>
+    </div>
+  </div>
+
+  <div class="ca-block">
+    <div class="ca-line"><span class="cl">Espèces déclarées</span><span class="cv esp" id="caEsp">0,00 €</span></div>
+    <div class="ca-line"><span class="cl">Carte</span><span class="cv cb" id="caCb">0,00 €</span></div>
+    <div class="ca-line ca-total"><span class="cl">CA de la soirée</span><span class="cv" id="caTotal">0,00 €</span></div>
+  </div>
+
+  <div class="rep-hint">Les espèces déclarées servent au contrôle de caisse.<br>Le CA complet sert au calcul de la répartition.</div>
+
+</div>
+</div><!-- /tab-tpe -->
+
+<!-- ============ ② COMPTAGE ============ -->
+<div class="tab-panel" id="tab-caisse">
 <div class="config-panel">
   <div class="config-row">
     <label>Fond caisse</label>
     <div class="input-euro">
-      <input type="number" id="fondCaisse" value="300" inputmode="decimal" min="0">
-      <span class="euro">€</span>
-    </div>
-  </div>
-  <div class="config-divider"></div>
-  <div class="config-row">
-    <label>TPE 1</label>
-    <div class="input-euro">
-      <input type="number" id="zCaisse1" placeholder="0" inputmode="decimal" min="0">
-      <span class="euro">€</span>
-    </div>
-  </div>
-  <div class="config-row">
-    <label>TPE 2</label>
-    <div class="input-euro">
-      <input type="number" id="zCaisse2" placeholder="0" inputmode="decimal" min="0">
+      <input type="number" id="fondCaisse" value="400" inputmode="decimal" min="0">
       <span class="euro">€</span>
     </div>
   </div>
@@ -764,15 +897,19 @@
 <div class="recap-block">
   <div class="recap-row">
     <span class="rl">Fond de caisse</span>
-    <span class="rv" id="recapFdc">300,00 €</span>
+    <span class="rv" id="recapFdc">400,00 €</span>
   </div>
   <div class="recap-row">
-    <span class="rl">TPE 1 + 2</span>
-    <span class="rv blue" id="recapZ">0,00 €</span>
+    <span class="rl">Espèces déclarées</span>
+    <span class="rv accent" id="recapEsp">0,00 €</span>
   </div>
   <div class="recap-row">
-    <span class="rl">↳ Total attendu</span>
-    <span class="rv accent" id="recapAttendu">300,00 €</span>
+    <span class="rl">↳ Attendu dans le tiroir</span>
+    <span class="rv accent" id="recapAttendu">400,00 €</span>
+  </div>
+  <div class="recap-row">
+    <span class="rl">Compté</span>
+    <span class="rv blue" id="recapCompte">0,00 €</span>
   </div>
 </div>
 
@@ -789,56 +926,60 @@
 
 </div><!-- /tab-caisse -->
 
+<!-- ============ ③ RÉPARTITION ============ -->
 <div class="tab-panel" id="tab-repart">
 <div class="rep-panel">
 
   <div class="recap-block" style="margin:0">
     <div class="recap-row">
-      <span class="rl">Total compté</span>
-      <span class="rv" id="repTotal">0,00 €</span>
+      <span class="rl">CA de la soirée</span>
+      <span class="rv accent" id="repCa">0,00 €</span>
     </div>
     <div class="recap-row">
-      <span class="rl">− Fond de caisse</span>
-      <span class="rv" id="repFdc">0,00 €</span>
+      <span class="rl">Espèces disponibles</span>
+      <span class="rv blue" id="repDispo">0,00 €</span>
     </div>
     <div class="recap-row">
-      <span class="rl">= Base à répartir</span>
-      <span class="rv accent" id="repBase">0,00 €</span>
+      <span class="rl">↳ Soit du CA</span>
+      <span class="rv" id="repPart">—</span>
     </div>
   </div>
 
   <div class="rep-slider-block">
     <div class="rep-pct-display" id="repPctVal">20 %</div>
-    <div class="rep-pct-caption">Part à réintégrer en caisse</div>
+    <div class="rep-pct-caption">Part du CA à écarter</div>
     <input type="range" class="rep-slider" id="repSlider" min="0" max="100" step="1" value="20">
     <div class="rep-ticks"><span>0 %</span><span>25 %</span><span>50 %</span><span>75 %</span><span>100 %</span></div>
     <div class="rep-saved-msg" id="repSavedMsg">✓ Mémorisé sur tous les appareils</div>
   </div>
 
+  <div class="rep-warning" id="repWarning" style="display:none"></div>
+
   <div class="rep-grid" id="repResults">
-    <div class="rep-result keep">
+    <div class="rep-result keep" id="repKeepCard">
       <div>
-        <span class="rrl">À réintégrer</span>
-        <span class="rrs" id="repKeepSub">20 % de la base</span>
+        <span class="rrl">À écarter</span>
+        <span class="rrs" id="repKeepSub">20 % du CA</span>
       </div>
       <div class="rrv" id="repKeepVal">0,00 €</div>
     </div>
-    <div class="rep-result out">
+    <div class="rep-result out" id="repOutCard">
       <div>
-        <span class="rrl">En excès</span>
-        <span class="rrs" id="repOutSub">80 % de la base</span>
+        <span class="rrl">Reste en caisse</span>
+        <span class="rrs">espèces au-delà du fond</span>
       </div>
       <div class="rrv" id="repOutVal">0,00 €</div>
     </div>
   </div>
 
   <div class="rep-empty" id="repEmpty" style="display:none">
-    Compte les espèces dans l'onglet Caisse — rien à répartir tant que le total ne dépasse pas le fond de caisse.
+    Renseigne les TPE puis compte les espèces — la répartition a besoin des deux.
   </div>
 
 </div>
 </div><!-- /tab-repart -->
 
+<!-- ============ ⚙ RÉGLAGES ============ -->
 <div class="tab-panel" id="tab-qr">
 <div class="qr-panel">
   <div class="settings-totals">
@@ -850,14 +991,14 @@
       <span class="sl">Billets</span>
       <span class="sv" id="totalBills">0,00 €</span>
     </div>
-    <button class="btn-reset" id="btnReset">↺ Réinitialiser</button>
+    <button class="btn-reset" id="btnReset">↺ Réinitialiser la soirée</button>
   </div>
   <div class="setting-block">
     <div class="setting-block-title">⚙ Fond de caisse par défaut</div>
     <div class="setting-row">
       <label>Valeur au démarrage</label>
       <div class="input-euro" style="max-width:130px">
-        <input type="number" id="fdcDefault" inputmode="decimal" min="0" placeholder="300">
+        <input type="number" id="fdcDefault" inputmode="decimal" min="0" placeholder="400">
         <span class="euro">€</span>
       </div>
     </div>
@@ -867,7 +1008,7 @@
     </div>
   </div>
   <div class="histo-divider"></div>
-  <div class="histo-section-title">Historique des soirées — TPE + réintégré</div>
+  <div class="histo-section-title">Historique des soirées</div>
   <div class="histo-list" id="histoList"><div class="histo-empty">Aucune soirée enregistrée</div></div>
   <button class="btn-delete-all" id="btnDeleteAll" style="display:none">🗑 Effacer tout l'historique</button>
   <div class="histo-divider"></div>
@@ -877,12 +1018,10 @@
 </div>
 </div><!-- /tab-qr -->
 
-
-
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
     <h3>Réinitialiser ?</h3>
-    <p>Tous les comptages seront remis à zéro. Le fond de caisse et les Z seront conservés.</p>
+    <p>Les comptages d'espèces et les montants TPE seront remis à zéro. Le fond de caisse et le pourcentage sont conservés.</p>
     <div class="modal-btns">
       <button class="btn-cancel" id="btnCancel">Annuler</button>
       <button class="btn-confirm" id="btnConfirm">Remettre à zéro</button>
@@ -891,6 +1030,9 @@
 </div>
 
 <script>
+const VERSION = 'v10.0';
+document.getElementById('verBadge').textContent = VERSION;
+
 const DENOMS = [
   { value: 0.01, label: '1 ct',   type: 'coin' },
   { value: 0.02, label: '2 cts',  type: 'coin' },
@@ -910,6 +1052,8 @@ const DENOMS = [
 ];
 
 const counts = new Array(DENOMS.length).fill(0);
+const PCT_FALLBACK = 20;
+let repPct = PCT_FALLBACK;
 
 function fmt(n) {
   const abs = Math.abs(n);
@@ -927,6 +1071,31 @@ function getNum(id) {
   return Math.max(0, parseFloat(document.getElementById(id).value) || 0);
 }
 
+// ── État unique, recalculé à chaque saisie ──
+function computeState() {
+  let coins = 0, bills = 0;
+  DENOMS.forEach((d, i) => {
+    const t = counts[i] * d.value;
+    if (d.type === 'coin') coins += t; else bills += t;
+  });
+  const esp1 = getNum('esp1'), cb1 = getNum('cb1');
+  const esp2 = getNum('esp2'), cb2 = getNum('cb2');
+  const especes = esp1 + esp2;
+  const cb = cb1 + cb2;
+  const ca = especes + cb;
+  const fdc = getNum('fondCaisse');
+  const totalCompte = coins + bills;
+  const attendu = fdc + especes;
+  const ecart = totalCompte - attendu;
+  const dispo = Math.max(0, totalCompte - fdc);
+  const aEcarter = ca * repPct / 100;
+  const reste = dispo - aEcarter;
+  const pctMax = ca > 0.005 ? Math.floor(dispo / ca * 100) : 0;
+  const partEspeces = ca > 0.005 ? dispo / ca * 100 : 0;
+  return { coins, bills, esp1, cb1, esp2, cb2, especes, cb, ca, fdc,
+           totalCompte, attendu, ecart, dispo, aEcarter, reste, pctMax, partEspeces };
+}
+
 function buildList() {
   const list = document.getElementById('denomList');
   let lastType = null;
@@ -939,7 +1108,6 @@ function buildList() {
       list.appendChild(sep);
       lastType = d.type;
     }
-
     const row = document.createElement('div');
     row.className = 'denom-row';
     row.innerHTML = `
@@ -973,119 +1141,92 @@ function setCount(i, val) {
   counts[i] = val;
   const inp = document.getElementById('inp-' + i);
   if (inp) inp.value = val;
-  updateRow(i);
-  updateTotals();
-}
-
-function updateRow(i) {
   const sub = document.getElementById('sub-' + i);
-  const total = counts[i] * DENOMS[i].value;
-  sub.textContent = fmt(total);
+  sub.textContent = fmt(counts[i] * DENOMS[i].value);
   sub.className = 'denom-subtotal' + (counts[i] > 0 ? ' nonzero' : '');
+  render();
 }
 
-function updateTotals() {
-  let coins = 0, bills = 0;
-  DENOMS.forEach((d, i) => {
-    const t = counts[i] * d.value;
-    if (d.type === 'coin') coins += t; else bills += t;
-  });
+function render() {
+  const s = computeState();
 
-  const totalCompte = coins + bills;
-  const fdc     = getNum('fondCaisse');
-  const z1      = getNum('zCaisse1');
-  const z2      = getNum('zCaisse2');
-  const zTotal  = z1 + z2;
-  const attendu = fdc + zTotal;
-  const ecart   = totalCompte - attendu;
+  // ① TPE
+  document.getElementById('caEsp').textContent   = fmt(s.especes);
+  document.getElementById('caCb').textContent    = fmt(s.cb);
+  document.getElementById('caTotal').textContent = fmt(s.ca);
+  document.getElementById('headerTotal').textContent = fmt(s.ca);
 
-  document.getElementById('headerTotal').textContent    = fmt(totalCompte);
-  document.getElementById('totalCoins').textContent     = fmt(coins);
-  document.getElementById('totalBills').textContent     = fmt(bills);
-  document.getElementById('recapFdc').textContent       = fmt(fdc);
-  document.getElementById('recapZ').textContent         = fmt(zTotal);
-  document.getElementById('recapAttendu').textContent   = fmt(attendu);
+  // ② Comptage
+  document.getElementById('recapFdc').textContent     = fmt(s.fdc);
+  document.getElementById('recapEsp').textContent     = fmt(s.especes);
+  document.getElementById('recapAttendu').textContent = fmt(s.attendu);
+  document.getElementById('recapCompte').textContent  = fmt(s.totalCompte);
+  document.getElementById('totalCoins').textContent   = fmt(s.coins);
+  document.getElementById('totalBills').textContent   = fmt(s.bills);
 
-  const ecartEl  = document.getElementById('ecartValue');
+  const ecartEl = document.getElementById('ecartValue');
   const bannerEl = document.getElementById('ecartBanner');
-  const subEl    = document.getElementById('ecartSub');
-
+  const subEl = document.getElementById('ecartSub');
   let cls;
-  if (Math.abs(ecart) < 0.005) {
-    cls = 'zero';
-    subEl.textContent = '✓ Caisse équilibrée';
-  } else if (ecart > 0) {
-    cls = 'positive';
-    subEl.textContent = 'Surplus en caisse';
-  } else {
-    cls = 'negative';
-    subEl.textContent = 'Manquant en caisse';
-  }
-
-  ecartEl.textContent = fmtSigned(ecart);
+  if (Math.abs(s.ecart) < 0.005) { cls = 'zero'; subEl.textContent = '✓ Caisse équilibrée'; }
+  else if (s.ecart > 0)          { cls = 'positive'; subEl.textContent = 'Surplus en caisse'; }
+  else                           { cls = 'negative'; subEl.textContent = 'Manquant en caisse'; }
+  ecartEl.textContent = fmtSigned(s.ecart);
   ecartEl.className   = 'ecart-value ' + cls;
   bannerEl.className  = 'ecart-banner ' + cls;
 
-  updateRepartition();
+  // ③ Répartition
+  document.getElementById('repCa').textContent    = fmt(s.ca);
+  document.getElementById('repDispo').textContent = fmt(s.dispo);
+  document.getElementById('repPart').textContent  = s.ca > 0.005
+    ? s.partEspeces.toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' %'
+    : '—';
+
+  document.getElementById('repPctVal').textContent  = repPct + ' %';
+  document.getElementById('repKeepSub').textContent = repPct + ' % du CA';
+  document.getElementById('repKeepVal').textContent = fmt(s.aEcarter);
+  document.getElementById('repOutVal').textContent  = fmt(Math.max(0, s.reste));
+
+  const pret = s.ca > 0.005 && s.totalCompte > 0.005;
+  document.getElementById('repResults').style.display = pret ? 'grid' : 'none';
+  document.getElementById('repEmpty').style.display   = pret ? 'none' : 'block';
+
+  const over = pret && s.reste < -0.005;
+  document.getElementById('repSlider').className   = 'rep-slider' + (over ? ' over' : '');
+  document.getElementById('repPctVal').className   = 'rep-pct-display' + (over ? ' over' : '');
+  document.getElementById('repKeepCard').className = 'rep-result keep' + (over ? ' over' : '');
+  const warn = document.getElementById('repWarning');
+  if (over) {
+    warn.style.display = 'block';
+    warn.innerHTML = 'Impossible : à ' + repPct + ' % il faudrait écarter <b>' + fmt(s.aEcarter)
+      + '</b> alors que le tiroir ne contient que <b>' + fmt(s.dispo)
+      + '</b> au-delà du fond.<br>Maximum atteignable ce soir : <b>' + s.pctMax + ' %</b>.';
+  } else {
+    warn.style.display = 'none';
+  }
 }
-
-// ── VERSION ──
-const VERSION = 'v9.4';
-document.getElementById('verBadge').textContent = VERSION;
-
-// ── REPARTITION ──
-const PCT_MIN = 0, PCT_MAX = 100, PCT_FALLBACK = 20;
-let repPct = PCT_FALLBACK;
-
-function updateRepartition() {
-  let coins = 0, bills = 0;
-  DENOMS.forEach((d, i) => {
-    const t = counts[i] * d.value;
-    if (d.type === 'coin') coins += t; else bills += t;
-  });
-  const totalCompte = coins + bills;
-  const fdc  = getNum('fondCaisse');
-  const base = Math.max(0, totalCompte - fdc);
-
-  const keep = base * repPct / 100;
-  const out  = base - keep;
-
-  document.getElementById('repTotal').textContent = fmt(totalCompte);
-  document.getElementById('repFdc').textContent   = fmt(fdc);
-  document.getElementById('repBase').textContent  = fmt(base);
-
-  document.getElementById('repPctVal').textContent = repPct + ' %';
-  document.getElementById('repKeepSub').textContent = repPct + ' % de la base';
-  document.getElementById('repOutSub').textContent  = (100 - repPct) + ' % de la base';
-  document.getElementById('repKeepVal').textContent = fmt(keep);
-  document.getElementById('repOutVal').textContent  = fmt(out);
-
-  const hasBase = base > 0.005;
-  document.getElementById('repResults').style.display = hasBase ? 'grid' : 'none';
-  document.getElementById('repEmpty').style.display   = hasBase ? 'none'  : 'block';
-}
-
-const repSlider = document.getElementById('repSlider');
-repSlider.addEventListener('input', () => {
-  repPct = +repSlider.value;
-  updateRepartition();
-});
 
 function reset() {
   for (let i = 0; i < counts.length; i++) {
     counts[i] = 0;
     const inp = document.getElementById('inp-' + i);
     if (inp) inp.value = 0;
-    updateRow(i);
+    const sub = document.getElementById('sub-' + i);
+    sub.textContent = fmt(0);
+    sub.className = 'denom-subtotal';
   }
-  updateTotals();
+  ['esp1', 'cb1', 'esp2', 'cb2'].forEach(id => { document.getElementById(id).value = ''; });
+  render();
 }
 
-['fondCaisse', 'zCaisse1', 'zCaisse2'].forEach(id => {
+['fondCaisse', 'esp1', 'cb1', 'esp2', 'cb2'].forEach(id => {
   const el = document.getElementById(id);
-  el.addEventListener('input', updateTotals);
+  el.addEventListener('input', render);
   el.addEventListener('focus', function() { this.select(); });
 });
+
+const repSlider = document.getElementById('repSlider');
+repSlider.addEventListener('input', () => { repPct = +repSlider.value; render(); });
 
 document.getElementById('btnReset').addEventListener('click', () =>
   document.getElementById('modalOverlay').classList.add('open'));
@@ -1100,30 +1241,28 @@ document.getElementById('modalOverlay').addEventListener('click', function(e) {
 });
 
 buildList();
-updateTotals();
+render();
 
-
-// ── TABS ──
+// ── ONGLETS ──
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    window.scrollTo(0, 0);
   });
 });
 
 // ── QR CODE ──
 new QRCode(document.getElementById('qrcode'), {
   text: 'https://i-immersion.github.io/Calcul-fond-de-caisse/',
-  width: 220,
-  height: 220,
-  colorDark: '#0e0e0e',
-  colorLight: '#ffffff',
+  width: 220, height: 220,
+  colorDark: '#0e0e0e', colorLight: '#ffffff',
   correctLevel: QRCode.CorrectLevel.H
 });
 
-// ── FIREBASE INIT ──
+// ── FIREBASE ──
 firebase.initializeApp({
   apiKey: "AIzaSyBPgjVFKrP80qX_hlfUFqL168XONfNIBA4",
   authDomain: "lumiia-live.firebaseapp.com",
@@ -1135,26 +1274,20 @@ firebase.initializeApp({
 });
 const db = firebase.database();
 
-// ── FOND DE CAISSE PAR DÉFAUT ──
-const fdcRef = db.ref('/caisse_config/fdc_default');
-
-// ── VOYANT CONNEXION ──
 const connDot = document.getElementById('connDot');
 db.ref('.info/connected').on('value', snap => {
-  if (snap.val() === true) {
-    connDot.className = 'conn-dot online';
-    connDot.title = 'Firebase connecté';
-  } else {
-    connDot.className = 'conn-dot offline';
-    connDot.title = 'Firebase déconnecté';
-  }
+  connDot.className = 'conn-dot ' + (snap.val() === true ? 'online' : 'offline');
+  connDot.title = snap.val() === true ? 'Firebase connecté' : 'Firebase déconnecté';
 });
+
+// Fond de caisse par défaut
+const fdcRef = db.ref('/caisse_config/fdc_default');
 fdcRef.once('value').then(snap => {
   const val = snap.val();
   if (val !== null) {
     document.getElementById('fondCaisse').value = val;
     document.getElementById('fdcDefault').value = val;
-    updateTotals();
+    render();
   } else {
     document.getElementById('fdcDefault').value = document.getElementById('fondCaisse').value;
   }
@@ -1164,21 +1297,21 @@ document.getElementById('btnSaveFdc').addEventListener('click', () => {
   const val = parseFloat(document.getElementById('fdcDefault').value) || 0;
   fdcRef.set(val);
   document.getElementById('fondCaisse').value = val;
-  updateTotals();
+  render();
   const msg = document.getElementById('fdcSavedMsg');
   msg.textContent = '✓ Enregistré sur tous les appareils';
   msg.style.opacity = '1';
   setTimeout(() => { msg.style.opacity = '0'; }, 2500);
 });
 
-// ── POURCENTAGE PAR DEFAUT (partage) ──
+// Pourcentage par défaut
 const pctRef = db.ref('/caisse_config/pct_default');
 pctRef.once('value').then(snap => {
   const v = parseInt(snap.val(), 10);
-  if (!isNaN(v) && v >= PCT_MIN && v <= PCT_MAX) {
+  if (!isNaN(v) && v >= 0 && v <= 100) {
     repPct = v;
     document.getElementById('repSlider').value = v;
-    updateRepartition();
+    render();
   }
 });
 
@@ -1192,30 +1325,19 @@ document.getElementById('repSlider').addEventListener('change', () => {
 
 // ── HISTORIQUE ──
 const HISTO_REF = db.ref('/caisse_historique');
-
 HISTO_REF.on('value', snap => renderHistorique(snap.val()));
 
+const r2 = n => Math.round(n * 100) / 100;
+
 function getSnapshot() {
-  let coins = 0, bills = 0;
-  DENOMS.forEach((d, i) => {
-    const t = counts[i] * d.value;
-    if (d.type === 'coin') coins += t; else bills += t;
-  });
-  const totalCompte = coins + bills;
-  const fdc = Math.max(0, parseFloat(document.getElementById('fondCaisse').value) || 0);
-  const z1  = Math.max(0, parseFloat(document.getElementById('zCaisse1').value) || 0);
-  const z2  = Math.max(0, parseFloat(document.getElementById('zCaisse2').value) || 0);
-  const attendu = fdc + z1 + z2;
+  const s = computeState();
   return {
-    totalCompte: Math.round(totalCompte*100)/100,
-    coins: Math.round(coins*100)/100,
-    bills: Math.round(bills*100)/100,
-    fdc, zSimple: z1, zPrint: z2,
-    attendu: Math.round(attendu*100)/100,
-    ecart: Math.round((totalCompte-attendu)*100)/100,
-    pct: repPct,
-    reintegre: Math.round(Math.max(0, totalCompte - fdc) * repPct) / 100,
-    exces: Math.round(Math.max(0, totalCompte - fdc) * (100 - repPct)) / 100,
+    esp1: r2(s.esp1), cb1: r2(s.cb1), esp2: r2(s.esp2), cb2: r2(s.cb2),
+    especes: r2(s.especes), cb: r2(s.cb), ca: r2(s.ca),
+    coins: r2(s.coins), bills: r2(s.bills), totalCompte: r2(s.totalCompte),
+    fdc: s.fdc, attendu: r2(s.attendu), ecart: r2(s.ecart),
+    pct: repPct, ecarte: r2(s.aEcarter), reste: r2(s.reste),
+    zSimple: r2(s.esp1), zPrint: r2(s.esp2),
     ts: Date.now()
   };
 }
@@ -1225,7 +1347,7 @@ function scheduleSave() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
     const snap = getSnapshot();
-    if (snap.totalCompte === 0) return;
+    if (snap.totalCompte === 0 && snap.ca === 0) return;
     const today = new Date().toISOString().slice(0, 10);
     db.ref('/caisse_historique/' + today).set(snap);
   }, 2000);
@@ -1247,13 +1369,22 @@ function renderHistorique(data) {
   }
   const entries = Object.entries(data).sort((a, b) => b[0].localeCompare(a[0]));
   if (btnDel) btnDel.style.display = 'block';
-  const fmtE = n => (n||0).toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' €';
+  const fmtE = n => (n || 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
   list.innerHTML = entries.map(([date, d]) => {
-    const montant = (d.zSimple||0) + (d.zPrint||0) + (d.reintegre||0);
+    const anciennes = (typeof d.ca !== 'number');
+    const especes = anciennes ? ((d.zSimple || 0) + (d.zPrint || 0)) : d.especes;
+    const ca = anciennes ? especes : d.ca;
+    const cbTxt = anciennes ? '—' : fmtE(d.cb);
     const [y, m, day] = date.split('-');
     return `<div class="histo-card">
-      <span class="histo-date">${day}/${m}/${y}</span>
-      <span class="histo-montant">${fmtE(montant)}</span>
+      <div class="histo-top">
+        <span class="histo-date">${day}/${m}/${y}</span>
+        <span class="histo-montant">${fmtE(ca)}</span>
+      </div>
+      <div class="histo-sub">
+        <span>Esp. <b class="e">${fmtE(especes)}</b></span>
+        <span>CB <b class="c">${cbTxt}</b></span>
+      </div>
     </div>`;
   }).join('');
 }
