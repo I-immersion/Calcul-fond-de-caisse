@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Caisse LUMIIA — Calcul fond de caisse — v10.1 -->
+<!-- Caisse LUMIIA — Calcul fond de caisse — v10.2 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -899,6 +899,25 @@
   }
   .btn-histo-del:active { color: var(--red); }
 
+  /* ── v10.2 : bouton arrondir ── */
+  .btn-arrondir {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .btn-arrondir:active { background: var(--accent); color: #0e0e0e; border-color: var(--accent); }
+  .btn-arrondir:disabled { opacity: .35; cursor: default; }
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -909,7 +928,7 @@
 <div class="app-wrapper">
 
 <header>
-  <div class="logo">LUMIIA<span>Caisse du soir — <span id="verBadge">v10.1</span> <span class="conn-dot" id="connDot" title="Firebase déconnecté"></span></span></div>
+  <div class="logo">LUMIIA<span>Caisse du soir — <span id="verBadge">v10.2</span> <span class="conn-dot" id="connDot" title="Firebase déconnecté"></span></span></div>
   <div class="header-total">
     <div class="label">CA de la soirée</div>
     <div class="amount" id="headerTotal">0,00 €</div>
@@ -955,7 +974,7 @@
     <div class="ca-line"><span class="cl">Total espèces sur TPE</span><span class="cv esp" id="caEsp">0,00 €</span></div>
     <div class="ca-line"><span class="cl">Carte</span><span class="cv cb" id="caCb">0,00 €</span></div>
     <div class="ca-line" id="caAjoutLine" style="display:none"><span class="cl">+ Ajout de clôture</span><span class="cv esp" id="caAjout">0,00 €</span></div>
-    <div class="ca-line ca-total"><span class="cl">CA de la soirée</span><span class="cv" id="caTotal">0,00 €</span></div>
+    <div class="ca-line ca-total"><span class="cl" id="caTotalLabel">CA de la soirée (avant comptage)</span><span class="cv" id="caTotal">0,00 €</span></div>
   </div>
 
   <div class="rep-hint">Les espèces des TPE servent au contrôle de caisse.<br>Le CA complet sert au calcul de la répartition.</div>
@@ -1046,7 +1065,7 @@
     <div class="rep-result out" id="repOutCard">
       <div>
         <span class="rrl">Reste en caisse</span>
-        <span class="rrs">espèces au-delà du fond</span>
+        <span class="rrs">= montant ajouté au TPE</span>
       </div>
       <div class="rrv" id="repOutVal">0,00 €</div>
     </div>
@@ -1060,10 +1079,11 @@
     <div class="encaisse-title">Encaisser le reste</div>
     <div class="setting-row">
       <label>Montant à ajouter au TPE</label>
-      <div class="input-euro" style="max-width:130px">
+      <div class="input-euro" style="max-width:110px">
         <input type="number" id="ajoutInput" inputmode="decimal" min="0" step="0.01">
         <span class="euro">€</span>
       </div>
+      <button class="btn-arrondir" id="btnArrondir">≈ Arrondir</button>
     </div>
     <button class="btn-encaisse" id="btnEncaisse">Ajouter ce montant au TPE</button>
     <div class="encaisse-done" id="encaisseDone" style="display:none"></div>
@@ -1123,7 +1143,7 @@
 </div>
 
 <script>
-const VERSION = 'v10.1';
+const VERSION = 'v10.2';
 document.getElementById('verBadge').textContent = VERSION;
 
 const DENOMS = [
@@ -1246,6 +1266,17 @@ function setCount(i, val) {
   render();
 }
 
+// Montant effectivement ajouté au TPE : le validé s'il existe, sinon la
+// saisie en cours, sinon la valeur théorique issue du curseur.
+function montantEncaisse(s) {
+  if (s.ajout > 0.005) return s.ajout;
+  if (ajoutTouche) {
+    const v = parseFloat(document.getElementById('ajoutInput').value);
+    if (!isNaN(v)) return Math.min(Math.max(0, v), s.dispo);
+  }
+  return Math.max(0, Math.min(s.reste, s.dispo));
+}
+
 function render() {
   const s = computeState();
 
@@ -1254,6 +1285,9 @@ function render() {
   document.getElementById('caCb').textContent    = fmt(s.cb);
   document.getElementById('caAjout').textContent = fmt(s.ajout);
   document.getElementById('caAjoutLine').style.display = s.ajout > 0.005 ? 'flex' : 'none';
+  document.getElementById('caTotalLabel').textContent = s.ajout > 0.005
+    ? 'CA de la soir\u00e9e'
+    : 'CA de la soir\u00e9e (avant comptage)';
   document.getElementById('caTotal').textContent = fmt(s.ca);
   document.getElementById('headerTotal').textContent = fmt(s.ca);
 
@@ -1282,10 +1316,17 @@ function render() {
     ? s.pctMax + ' % du CA'
     : '—';
 
-  document.getElementById('repPctVal').textContent  = repPct + ' %';
-  document.getElementById('repKeepSub').textContent = repPct + ' % du CA';
-  document.getElementById('repKeepVal').textContent = fmt(s.aEcarter);
-  document.getElementById('repOutVal').textContent  = fmt(Math.max(0, s.reste));
+  document.getElementById('repPctVal').textContent = repPct + ' %';
+
+  // Le montant réellement encaissé pilote les deux cartes : ce qui n'est pas
+  // ajouté au TPE est ce qui sort de la caisse. Arrondir l'un déplace l'autre.
+  const encaisse = montantEncaisse(s);
+  const ecarteEff = Math.max(0, s.dispo - encaisse);
+  const pctEff = s.caTpe > 0.005 ? ecarteEff / s.caTpe * 100 : 0;
+  document.getElementById('repKeepSub').textContent =
+    pctEff.toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' % du CA';
+  document.getElementById('repKeepVal').textContent = fmt(ecarteEff);
+  document.getElementById('repOutVal').textContent  = fmt(encaisse);
 
   const pret = s.caTpe > 0.005 && s.totalCompte > 0.005;
   document.getElementById('repResults').style.display = pret ? 'grid' : 'none';
@@ -1314,6 +1355,7 @@ function render() {
   if (s.ajout > 0.005) {
     inpE.value = r2(s.ajout);
     inpE.disabled = true;
+    document.getElementById('btnArrondir').disabled = true;
     btnE.textContent = 'Annuler l\'ajout';
     btnE.className = 'btn-encaisse annuler';
     done.style.display = 'block';
@@ -1324,6 +1366,7 @@ function render() {
     btnE.textContent = 'Ajouter ce montant au TPE';
     btnE.className = 'btn-encaisse';
     done.style.display = 'none';
+    document.getElementById('btnArrondir').disabled = !pret;
     if (!ajoutTouche && document.activeElement !== inpE) {
       inpE.value = pret && s.reste > 0.005 ? r2(s.reste) : '';
     }
@@ -1353,9 +1396,22 @@ function reset() {
 });
 
 const repSlider = document.getElementById('repSlider');
-repSlider.addEventListener('input', () => { repPct = +repSlider.value; render(); });
+repSlider.addEventListener('input', () => {
+  repPct = +repSlider.value;
+  ajoutTouche = false;   // le curseur reprend la main sur un arrondi précédent
+  render();
+});
 
-document.getElementById('ajoutInput').addEventListener('input', () => { ajoutTouche = true; });
+document.getElementById('ajoutInput').addEventListener('input', () => { ajoutTouche = true; render(); });
+
+document.getElementById('btnArrondir').addEventListener('click', () => {
+  const s = computeState();
+  const base = montantEncaisse(s);
+  const arrondi = Math.min(Math.max(0, Math.round(base)), Math.floor(s.dispo));
+  document.getElementById('ajoutInput').value = arrondi;
+  ajoutTouche = true;
+  render();
+});
 document.getElementById('ajoutInput').addEventListener('focus', function() { this.select(); });
 
 document.getElementById('btnEncaisse').addEventListener('click', () => {
@@ -1488,7 +1544,8 @@ function getSnapshot() {
     especes: r2(s.especes), cb: r2(s.cb), caTpe: r2(s.caTpe), ca: r2(s.ca),
     coins: r2(s.coins), bills: r2(s.bills), totalCompte: r2(s.totalCompte),
     fdc: s.fdc, attendu: r2(s.attendu), ecart: r2(s.ecart),
-    pct: repPct, ecarte: r2(s.aEcarter), reste: r2(s.reste),
+    pct: repPct, ecarte: r2(Math.max(0, s.dispo - montantEncaisse(s))),
+    encaisse: r2(montantEncaisse(s)), ecarteTheorique: r2(s.aEcarter),
     zSimple: r2(s.esp1), zPrint: r2(s.esp2),
     ts: Date.now()
   };
