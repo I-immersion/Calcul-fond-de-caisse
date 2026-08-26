@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Caisse LUMIIA — Calcul fond de caisse — v10.0 -->
+<!-- Caisse LUMIIA — Calcul fond de caisse — v10.1 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -819,6 +819,86 @@
   .histo-sub .e { color: var(--accent); }
   .histo-sub .c { color: var(--blue); }
 
+  /* ── v10.1 : boutons d'étape ── */
+  .btn-next {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 13px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .btn-next:active { background: var(--accent); color: #0e0e0e; }
+
+  .btn-next-wrap { padding: 14px 16px 40px; }
+
+  /* ── v10.1 : encaissement du reste ── */
+  .encaisse-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+  }
+
+  .encaisse-title {
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .btn-encaisse {
+    width: 100%;
+    background: var(--blue);
+    border: none;
+    color: #06121c;
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 12px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .btn-encaisse:active { opacity: .75; }
+  .btn-encaisse.annuler { background: transparent; border: 1px solid var(--red); color: var(--red); }
+
+  .encaisse-done {
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--green);
+    background: #0e2016;
+    border: 1px solid var(--green);
+    border-radius: 6px;
+    padding: 10px 12px;
+  }
+  .encaisse-done b { font-family: var(--mono); }
+
+  /* ── v10.1 : suppression d'une soirée ── */
+  .histo-top { gap: 10px; }
+  .btn-histo-del {
+    background: transparent;
+    border: none;
+    color: #555;
+    font-size: 15px;
+    line-height: 1;
+    padding: 2px 4px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .btn-histo-del:active { color: var(--red); }
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -829,7 +909,7 @@
 <div class="app-wrapper">
 
 <header>
-  <div class="logo">LUMIIA<span>Caisse du soir — <span id="verBadge">v10.0</span> <span class="conn-dot" id="connDot" title="Firebase déconnecté"></span></span></div>
+  <div class="logo">LUMIIA<span>Caisse du soir — <span id="verBadge">v10.1</span> <span class="conn-dot" id="connDot" title="Firebase déconnecté"></span></span></div>
   <div class="header-total">
     <div class="label">CA de la soirée</div>
     <div class="amount" id="headerTotal">0,00 €</div>
@@ -872,12 +952,15 @@
   </div>
 
   <div class="ca-block">
-    <div class="ca-line"><span class="cl">Espèces déclarées</span><span class="cv esp" id="caEsp">0,00 €</span></div>
+    <div class="ca-line"><span class="cl">Total espèces sur TPE</span><span class="cv esp" id="caEsp">0,00 €</span></div>
     <div class="ca-line"><span class="cl">Carte</span><span class="cv cb" id="caCb">0,00 €</span></div>
+    <div class="ca-line" id="caAjoutLine" style="display:none"><span class="cl">+ Ajout de clôture</span><span class="cv esp" id="caAjout">0,00 €</span></div>
     <div class="ca-line ca-total"><span class="cl">CA de la soirée</span><span class="cv" id="caTotal">0,00 €</span></div>
   </div>
 
-  <div class="rep-hint">Les espèces déclarées servent au contrôle de caisse.<br>Le CA complet sert au calcul de la répartition.</div>
+  <div class="rep-hint">Les espèces des TPE servent au contrôle de caisse.<br>Le CA complet sert au calcul de la répartition.</div>
+
+  <button class="btn-next" data-goto="caisse">② Comptage →</button>
 
 </div>
 </div><!-- /tab-tpe -->
@@ -896,11 +979,7 @@
 
 <div class="recap-block">
   <div class="recap-row">
-    <span class="rl">Fond de caisse</span>
-    <span class="rv" id="recapFdc">400,00 €</span>
-  </div>
-  <div class="recap-row">
-    <span class="rl">Espèces déclarées</span>
+    <span class="rl">Total espèces sur TPE</span>
     <span class="rv accent" id="recapEsp">0,00 €</span>
   </div>
   <div class="recap-row">
@@ -922,7 +1001,8 @@
 </div>
 
 <div class="section-title">Comptage des espèces</div>
-<div class="denom-list" id="denomList"></div>
+<div class="denom-list" id="denomList" style="padding-bottom:6px"></div>
+<div class="btn-next-wrap"><button class="btn-next" data-goto="repart">③ Répartition →</button></div>
 
 </div><!-- /tab-caisse -->
 
@@ -932,15 +1012,15 @@
 
   <div class="recap-block" style="margin:0">
     <div class="recap-row">
-      <span class="rl">CA de la soirée</span>
+      <span class="rl">CA relevé sur les TPE</span>
       <span class="rv accent" id="repCa">0,00 €</span>
     </div>
     <div class="recap-row">
-      <span class="rl">Espèces disponibles</span>
+      <span class="rl">Espèces disponibles<br><span style="font-size:10px;color:#666;text-transform:none;letter-spacing:0">(compté sans le fond de caisse)</span></span>
       <span class="rv blue" id="repDispo">0,00 €</span>
     </div>
     <div class="recap-row">
-      <span class="rl">↳ Soit du CA</span>
+      <span class="rl">↳ Maximum écartable</span>
       <span class="rv" id="repPart">—</span>
     </div>
   </div>
@@ -974,6 +1054,19 @@
 
   <div class="rep-empty" id="repEmpty" style="display:none">
     Renseigne les TPE puis compte les espèces — la répartition a besoin des deux.
+  </div>
+
+  <div class="encaisse-block" id="encaisseBlock">
+    <div class="encaisse-title">Encaisser le reste</div>
+    <div class="setting-row">
+      <label>Montant à ajouter au TPE</label>
+      <div class="input-euro" style="max-width:130px">
+        <input type="number" id="ajoutInput" inputmode="decimal" min="0" step="0.01">
+        <span class="euro">€</span>
+      </div>
+    </div>
+    <button class="btn-encaisse" id="btnEncaisse">Ajouter ce montant au TPE</button>
+    <div class="encaisse-done" id="encaisseDone" style="display:none"></div>
   </div>
 
 </div>
@@ -1030,7 +1123,7 @@
 </div>
 
 <script>
-const VERSION = 'v10.0';
+const VERSION = 'v10.1';
 document.getElementById('verBadge').textContent = VERSION;
 
 const DENOMS = [
@@ -1054,6 +1147,10 @@ const DENOMS = [
 const counts = new Array(DENOMS.length).fill(0);
 const PCT_FALLBACK = 20;
 let repPct = PCT_FALLBACK;
+let ajout = 0;           // encaissement de clôture, validé par le bouton
+let ajoutTouche = false; // l'utilisateur a saisi un montant à la main
+
+const r2 = n => Math.round(n * 100) / 100;
 
 function fmt(n) {
   const abs = Math.abs(n);
@@ -1080,19 +1177,21 @@ function computeState() {
   });
   const esp1 = getNum('esp1'), cb1 = getNum('cb1');
   const esp2 = getNum('esp2'), cb2 = getNum('cb2');
-  const especes = esp1 + esp2;
+  const especesTpe = esp1 + esp2;
   const cb = cb1 + cb2;
-  const ca = especes + cb;
+  const caTpe = especesTpe + cb;      // base du calcul de répartition
+  const especes = especesTpe + ajout; // après encaissement du reste
+  const ca = caTpe + ajout;           // CA final de la soirée
   const fdc = getNum('fondCaisse');
   const totalCompte = coins + bills;
-  const attendu = fdc + especes;
+  const attendu = fdc + especesTpe;   // le contrôle porte sur le relevé TPE
   const ecart = totalCompte - attendu;
   const dispo = Math.max(0, totalCompte - fdc);
-  const aEcarter = ca * repPct / 100;
+  const aEcarter = caTpe * repPct / 100;
   const reste = dispo - aEcarter;
-  const pctMax = ca > 0.005 ? Math.floor(dispo / ca * 100) : 0;
-  const partEspeces = ca > 0.005 ? dispo / ca * 100 : 0;
-  return { coins, bills, esp1, cb1, esp2, cb2, especes, cb, ca, fdc,
+  const pctMax = caTpe > 0.005 ? Math.floor(dispo / caTpe * 100) : 0;
+  const partEspeces = caTpe > 0.005 ? dispo / caTpe * 100 : 0;
+  return { coins, bills, esp1, cb1, esp2, cb2, especesTpe, especes, cb, caTpe, ca, ajout, fdc,
            totalCompte, attendu, ecart, dispo, aEcarter, reste, pctMax, partEspeces };
 }
 
@@ -1151,14 +1250,15 @@ function render() {
   const s = computeState();
 
   // ① TPE
-  document.getElementById('caEsp').textContent   = fmt(s.especes);
+  document.getElementById('caEsp').textContent   = fmt(s.especesTpe);
   document.getElementById('caCb').textContent    = fmt(s.cb);
+  document.getElementById('caAjout').textContent = fmt(s.ajout);
+  document.getElementById('caAjoutLine').style.display = s.ajout > 0.005 ? 'flex' : 'none';
   document.getElementById('caTotal').textContent = fmt(s.ca);
   document.getElementById('headerTotal').textContent = fmt(s.ca);
 
   // ② Comptage
-  document.getElementById('recapFdc').textContent     = fmt(s.fdc);
-  document.getElementById('recapEsp').textContent     = fmt(s.especes);
+  document.getElementById('recapEsp').textContent     = fmt(s.especesTpe);
   document.getElementById('recapAttendu').textContent = fmt(s.attendu);
   document.getElementById('recapCompte').textContent  = fmt(s.totalCompte);
   document.getElementById('totalCoins').textContent   = fmt(s.coins);
@@ -1176,10 +1276,10 @@ function render() {
   bannerEl.className  = 'ecart-banner ' + cls;
 
   // ③ Répartition
-  document.getElementById('repCa').textContent    = fmt(s.ca);
+  document.getElementById('repCa').textContent    = fmt(s.caTpe);
   document.getElementById('repDispo').textContent = fmt(s.dispo);
-  document.getElementById('repPart').textContent  = s.ca > 0.005
-    ? s.partEspeces.toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' %'
+  document.getElementById('repPart').textContent  = s.caTpe > 0.005
+    ? s.pctMax + ' % du CA'
     : '—';
 
   document.getElementById('repPctVal').textContent  = repPct + ' %';
@@ -1187,7 +1287,7 @@ function render() {
   document.getElementById('repKeepVal').textContent = fmt(s.aEcarter);
   document.getElementById('repOutVal').textContent  = fmt(Math.max(0, s.reste));
 
-  const pret = s.ca > 0.005 && s.totalCompte > 0.005;
+  const pret = s.caTpe > 0.005 && s.totalCompte > 0.005;
   document.getElementById('repResults').style.display = pret ? 'grid' : 'none';
   document.getElementById('repEmpty').style.display   = pret ? 'none' : 'block';
 
@@ -1204,6 +1304,30 @@ function render() {
   } else {
     warn.style.display = 'none';
   }
+
+  // Bloc encaissement du reste
+  const bloc = document.getElementById('encaisseBlock');
+  const done = document.getElementById('encaisseDone');
+  const btnE = document.getElementById('btnEncaisse');
+  const inpE = document.getElementById('ajoutInput');
+  bloc.style.display = pret ? 'flex' : 'none';
+  if (s.ajout > 0.005) {
+    inpE.value = r2(s.ajout);
+    inpE.disabled = true;
+    btnE.textContent = 'Annuler l\'ajout';
+    btnE.className = 'btn-encaisse annuler';
+    done.style.display = 'block';
+    done.innerHTML = '✓ <b>' + fmt(s.ajout) + '</b> ajoutés aux esp\u00e8ces TPE.<br>'
+      + 'CA de la soirée : <b>' + fmt(s.ca) + '</b> — c\'est ce montant qui part dans l\'historique.';
+  } else {
+    inpE.disabled = false;
+    btnE.textContent = 'Ajouter ce montant au TPE';
+    btnE.className = 'btn-encaisse';
+    done.style.display = 'none';
+    if (!ajoutTouche && document.activeElement !== inpE) {
+      inpE.value = pret && s.reste > 0.005 ? r2(s.reste) : '';
+    }
+  }
 }
 
 function reset() {
@@ -1216,6 +1340,9 @@ function reset() {
     sub.className = 'denom-subtotal';
   }
   ['esp1', 'cb1', 'esp2', 'cb2'].forEach(id => { document.getElementById(id).value = ''; });
+  ajout = 0;
+  ajoutTouche = false;
+  document.getElementById('ajoutInput').value = '';
   render();
 }
 
@@ -1227,6 +1354,23 @@ function reset() {
 
 const repSlider = document.getElementById('repSlider');
 repSlider.addEventListener('input', () => { repPct = +repSlider.value; render(); });
+
+document.getElementById('ajoutInput').addEventListener('input', () => { ajoutTouche = true; });
+document.getElementById('ajoutInput').addEventListener('focus', function() { this.select(); });
+
+document.getElementById('btnEncaisse').addEventListener('click', () => {
+  if (ajout > 0.005) {
+    ajout = 0;
+    ajoutTouche = false;
+  } else {
+    const v = Math.max(0, parseFloat(document.getElementById('ajoutInput').value) || 0);
+    if (v < 0.005) return;
+    ajout = v;
+    ajoutTouche = false;
+  }
+  render();
+  scheduleSave();
+});
 
 document.getElementById('btnReset').addEventListener('click', () =>
   document.getElementById('modalOverlay').classList.add('open'));
@@ -1252,6 +1396,15 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
     window.scrollTo(0, 0);
   });
+});
+
+function goTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + name));
+  window.scrollTo(0, 0);
+}
+document.querySelectorAll('.btn-next').forEach(b => {
+  b.addEventListener('click', () => goTab(b.dataset.goto));
 });
 
 // ── QR CODE ──
@@ -1327,13 +1480,12 @@ document.getElementById('repSlider').addEventListener('change', () => {
 const HISTO_REF = db.ref('/caisse_historique');
 HISTO_REF.on('value', snap => renderHistorique(snap.val()));
 
-const r2 = n => Math.round(n * 100) / 100;
-
 function getSnapshot() {
   const s = computeState();
   return {
     esp1: r2(s.esp1), cb1: r2(s.cb1), esp2: r2(s.esp2), cb2: r2(s.cb2),
-    especes: r2(s.especes), cb: r2(s.cb), ca: r2(s.ca),
+    especesTpe: r2(s.especesTpe), ajout: r2(s.ajout),
+    especes: r2(s.especes), cb: r2(s.cb), caTpe: r2(s.caTpe), ca: r2(s.ca),
     coins: r2(s.coins), bills: r2(s.bills), totalCompte: r2(s.totalCompte),
     fdc: s.fdc, attendu: r2(s.attendu), ecart: r2(s.ecart),
     pct: repPct, ecarte: r2(s.aEcarter), reste: r2(s.reste),
@@ -1379,7 +1531,9 @@ function renderHistorique(data) {
     return `<div class="histo-card">
       <div class="histo-top">
         <span class="histo-date">${day}/${m}/${y}</span>
+        <span style="flex:1"></span>
         <span class="histo-montant">${fmtE(ca)}</span>
+        <button class="btn-histo-del" data-date="${date}" title="Supprimer cette soirée">✕</button>
       </div>
       <div class="histo-sub">
         <span>Esp. <b class="e">${fmtE(especes)}</b></span>
@@ -1387,6 +1541,16 @@ function renderHistorique(data) {
       </div>
     </div>`;
   }).join('');
+
+  list.querySelectorAll('.btn-histo-del').forEach(b => {
+    b.addEventListener('click', () => {
+      const d = b.dataset.date;
+      const [y, m, day] = d.split('-');
+      if (confirm('Supprimer la soirée du ' + day + '/' + m + '/' + y + ' ?')) {
+        db.ref('/caisse_historique/' + d).remove();
+      }
+    });
+  });
 }
 
 document.getElementById('btnDeleteAll').addEventListener('click', () => {
