@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- Caisse LUMIIA — Calcul fond de caisse — v9.4 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -443,42 +444,25 @@
     border-radius: 8px;
     padding: 12px 14px;
     display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  .histo-card-header {
-    display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 12px;
   }
 
   .histo-date {
     font-family: var(--mono);
-    font-size: 13px;
-    color: var(--accent);
+    font-size: 14px;
+    color: var(--text);
     letter-spacing: 1px;
   }
 
-  .histo-ecart {
+  .histo-montant {
     font-family: var(--mono);
-    font-size: 14px;
+    font-size: 17px;
     font-weight: 700;
+    color: var(--accent);
+    white-space: nowrap;
   }
-
-  .histo-ecart.positive { color: var(--green); }
-  .histo-ecart.negative { color: var(--red); }
-  .histo-ecart.zero     { color: var(--muted); }
-
-  .histo-details {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 4px 12px;
-    font-size: 12px;
-    color: var(--muted);
-  }
-
-  .histo-details span { font-family: var(--mono); color: var(--text); }
 
   .histo-divider {
     height: 1px;
@@ -597,6 +581,137 @@
     box-shadow: 0 0 6px var(--red);
   }
 
+  /* ── REPARTITION ── */
+  .rep-panel { padding: 12px 16px 40px; display: flex; flex-direction: column; gap: 12px; }
+
+  .rep-slider-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 16px 12px;
+  }
+
+  .rep-pct-display {
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 42px;
+    line-height: 1;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+
+  .rep-pct-caption {
+    text-align: center;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .rep-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    outline: none;
+    margin: 0;
+  }
+
+  .rep-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 3px solid #0e0e0e;
+    box-shadow: 0 0 0 1px var(--accent);
+    cursor: pointer;
+  }
+
+  .rep-slider::-moz-range-thumb {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 3px solid #0e0e0e;
+    cursor: pointer;
+  }
+
+  .rep-ticks {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: #555;
+  }
+
+  .rep-saved-msg {
+    text-align: center;
+    font-size: 11px;
+    color: var(--green);
+    letter-spacing: 1px;
+    height: 14px;
+    opacity: 0;
+    transition: opacity .3s;
+    margin-top: 8px;
+  }
+
+  .rep-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .rep-result {
+    border-radius: 8px;
+    padding: 14px 10px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    text-align: center;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    min-width: 0;
+  }
+
+  .rep-result .rrl { font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); display: block; }
+  .rep-result .rrs { font-size: 10px; color: #666; letter-spacing: 1px; display: block; margin-top: 3px; }
+  .rep-result .rrv {
+    font-family: var(--mono);
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 400px) {
+    .rep-result .rrv { font-size: 20px; }
+    .rep-result .rrl { font-size: 11px; letter-spacing: 1px; }
+  }
+
+  .rep-result.keep  { border-color: var(--accent); background: #201b0e; }
+  .rep-result.keep .rrv { color: var(--accent); }
+  .rep-result.out   { border-color: var(--blue); background: #0e1720; }
+  .rep-result.out .rrv { color: var(--blue); }
+
+  .rep-empty {
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    letter-spacing: 1px;
+    padding: 24px 10px;
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+  }
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -607,7 +722,7 @@
 <div class="app-wrapper">
 
 <header>
-  <div class="logo">LUMIIA<span>Caisse du soir — v9 <span class="conn-dot" id="connDot" title="Firebase déconnecté"></span></span></div>
+  <div class="logo">LUMIIA<span>Caisse du soir — <span id="verBadge">v9.4</span> <span class="conn-dot" id="connDot" title="Firebase déconnecté"></span></span></div>
   <div class="header-total">
     <div class="label">Total compté</div>
     <div class="amount" id="headerTotal">0,00 €</div>
@@ -616,6 +731,7 @@
 
 <nav class="tab-nav">
   <button class="tab-btn active" data-tab="caisse">⊟ Caisse</button>
+  <button class="tab-btn" data-tab="repart">⚖ Répartition</button>
   <button class="tab-btn" data-tab="qr">⚙ Settings</button>
 </nav>
 
@@ -673,6 +789,56 @@
 
 </div><!-- /tab-caisse -->
 
+<div class="tab-panel" id="tab-repart">
+<div class="rep-panel">
+
+  <div class="recap-block" style="margin:0">
+    <div class="recap-row">
+      <span class="rl">Total compté</span>
+      <span class="rv" id="repTotal">0,00 €</span>
+    </div>
+    <div class="recap-row">
+      <span class="rl">− Fond de caisse</span>
+      <span class="rv" id="repFdc">0,00 €</span>
+    </div>
+    <div class="recap-row">
+      <span class="rl">= Base à répartir</span>
+      <span class="rv accent" id="repBase">0,00 €</span>
+    </div>
+  </div>
+
+  <div class="rep-slider-block">
+    <div class="rep-pct-display" id="repPctVal">20 %</div>
+    <div class="rep-pct-caption">Part à réintégrer en caisse</div>
+    <input type="range" class="rep-slider" id="repSlider" min="0" max="100" step="1" value="20">
+    <div class="rep-ticks"><span>0 %</span><span>25 %</span><span>50 %</span><span>75 %</span><span>100 %</span></div>
+    <div class="rep-saved-msg" id="repSavedMsg">✓ Mémorisé sur tous les appareils</div>
+  </div>
+
+  <div class="rep-grid" id="repResults">
+    <div class="rep-result keep">
+      <div>
+        <span class="rrl">À réintégrer</span>
+        <span class="rrs" id="repKeepSub">20 % de la base</span>
+      </div>
+      <div class="rrv" id="repKeepVal">0,00 €</div>
+    </div>
+    <div class="rep-result out">
+      <div>
+        <span class="rrl">En excès</span>
+        <span class="rrs" id="repOutSub">80 % de la base</span>
+      </div>
+      <div class="rrv" id="repOutVal">0,00 €</div>
+    </div>
+  </div>
+
+  <div class="rep-empty" id="repEmpty" style="display:none">
+    Compte les espèces dans l'onglet Caisse — rien à répartir tant que le total ne dépasse pas le fond de caisse.
+  </div>
+
+</div>
+</div><!-- /tab-repart -->
+
 <div class="tab-panel" id="tab-qr">
 <div class="qr-panel">
   <div class="settings-totals">
@@ -701,7 +867,7 @@
     </div>
   </div>
   <div class="histo-divider"></div>
-  <div class="histo-section-title">Historique des soirées</div>
+  <div class="histo-section-title">Historique des soirées — TPE + réintégré</div>
   <div class="histo-list" id="histoList"><div class="histo-empty">Aucune soirée enregistrée</div></div>
   <button class="btn-delete-all" id="btnDeleteAll" style="display:none">🗑 Effacer tout l'historique</button>
   <div class="histo-divider"></div>
@@ -859,7 +1025,51 @@ function updateTotals() {
   ecartEl.textContent = fmtSigned(ecart);
   ecartEl.className   = 'ecart-value ' + cls;
   bannerEl.className  = 'ecart-banner ' + cls;
+
+  updateRepartition();
 }
+
+// ── VERSION ──
+const VERSION = 'v9.4';
+document.getElementById('verBadge').textContent = VERSION;
+
+// ── REPARTITION ──
+const PCT_MIN = 0, PCT_MAX = 100, PCT_FALLBACK = 20;
+let repPct = PCT_FALLBACK;
+
+function updateRepartition() {
+  let coins = 0, bills = 0;
+  DENOMS.forEach((d, i) => {
+    const t = counts[i] * d.value;
+    if (d.type === 'coin') coins += t; else bills += t;
+  });
+  const totalCompte = coins + bills;
+  const fdc  = getNum('fondCaisse');
+  const base = Math.max(0, totalCompte - fdc);
+
+  const keep = base * repPct / 100;
+  const out  = base - keep;
+
+  document.getElementById('repTotal').textContent = fmt(totalCompte);
+  document.getElementById('repFdc').textContent   = fmt(fdc);
+  document.getElementById('repBase').textContent  = fmt(base);
+
+  document.getElementById('repPctVal').textContent = repPct + ' %';
+  document.getElementById('repKeepSub').textContent = repPct + ' % de la base';
+  document.getElementById('repOutSub').textContent  = (100 - repPct) + ' % de la base';
+  document.getElementById('repKeepVal').textContent = fmt(keep);
+  document.getElementById('repOutVal').textContent  = fmt(out);
+
+  const hasBase = base > 0.005;
+  document.getElementById('repResults').style.display = hasBase ? 'grid' : 'none';
+  document.getElementById('repEmpty').style.display   = hasBase ? 'none'  : 'block';
+}
+
+const repSlider = document.getElementById('repSlider');
+repSlider.addEventListener('input', () => {
+  repPct = +repSlider.value;
+  updateRepartition();
+});
 
 function reset() {
   for (let i = 0; i < counts.length; i++) {
@@ -961,6 +1171,25 @@ document.getElementById('btnSaveFdc').addEventListener('click', () => {
   setTimeout(() => { msg.style.opacity = '0'; }, 2500);
 });
 
+// ── POURCENTAGE PAR DEFAUT (partage) ──
+const pctRef = db.ref('/caisse_config/pct_default');
+pctRef.once('value').then(snap => {
+  const v = parseInt(snap.val(), 10);
+  if (!isNaN(v) && v >= PCT_MIN && v <= PCT_MAX) {
+    repPct = v;
+    document.getElementById('repSlider').value = v;
+    updateRepartition();
+  }
+});
+
+document.getElementById('repSlider').addEventListener('change', () => {
+  pctRef.set(repPct);
+  const msg = document.getElementById('repSavedMsg');
+  msg.style.opacity = '1';
+  clearTimeout(window.__repMsgTimer);
+  window.__repMsgTimer = setTimeout(() => { msg.style.opacity = '0'; }, 2000);
+});
+
 // ── HISTORIQUE ──
 const HISTO_REF = db.ref('/caisse_historique');
 
@@ -984,6 +1213,9 @@ function getSnapshot() {
     fdc, zSimple: z1, zPrint: z2,
     attendu: Math.round(attendu*100)/100,
     ecart: Math.round((totalCompte-attendu)*100)/100,
+    pct: repPct,
+    reintegre: Math.round(Math.max(0, totalCompte - fdc) * repPct) / 100,
+    exces: Math.round(Math.max(0, totalCompte - fdc) * (100 - repPct)) / 100,
     ts: Date.now()
   };
 }
@@ -1017,22 +1249,11 @@ function renderHistorique(data) {
   if (btnDel) btnDel.style.display = 'block';
   const fmtE = n => (n||0).toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' €';
   list.innerHTML = entries.map(([date, d]) => {
-    const ecartCls = Math.abs(d.ecart) < 0.01 ? 'zero' : d.ecart > 0 ? 'positive' : 'negative';
-    const ecartTxt = (d.ecart > 0 ? '+' : '') + fmtE(d.ecart);
+    const montant = (d.zSimple||0) + (d.zPrint||0) + (d.reintegre||0);
     const [y, m, day] = date.split('-');
     return `<div class="histo-card">
-      <div class="histo-card-header">
-        <span class="histo-date">${day}/${m}/${y}</span>
-        <span class="histo-ecart ${ecartCls}">${ecartTxt}</span>
-      </div>
-      <div class="histo-details">
-        <div>Compté</div><span>${fmtE(d.totalCompte)}</span>
-        <div>Attendu</div><span>${fmtE(d.attendu)}</span>
-        <div>TPE 1</div><span>${fmtE(d.zSimple)}</span>
-        <div>TPE 2</div><span>${fmtE(d.zPrint)}</span>
-        <div>Pièces</div><span>${fmtE(d.coins)}</span>
-        <div>Billets</div><span>${fmtE(d.bills)}</span>
-      </div>
+      <span class="histo-date">${day}/${m}/${y}</span>
+      <span class="histo-montant">${fmtE(montant)}</span>
     </div>`;
   }).join('');
 }
