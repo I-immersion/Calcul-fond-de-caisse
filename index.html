@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Caisse LUMIIA — Calcul fond de caisse — v11.0 -->
+<!-- Caisse LUMIIA — Calcul fond de caisse — v11.1 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -918,6 +918,44 @@
   .btn-arrondir:active { background: var(--accent); color: #0e0e0e; border-color: var(--accent); }
   .btn-arrondir:disabled { opacity: .35; cursor: default; }
 
+  /* ── v11.1 : part des espèces dans le CA ── */
+  .part-esp {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    padding: 12px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .part-esp .pel {
+    font-size: 12px;
+    letter-spacing: 1px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .part-esp .pes {
+    display: block;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: #666;
+    text-transform: none;
+    letter-spacing: 0;
+    margin-top: 3px;
+  }
+
+  .part-esp .pev {
+    font-family: var(--mono);
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -928,11 +966,7 @@
 <div class="app-wrapper">
 
 <header>
-  <div class="logo">LUMIIA<span>Caisse du soir — <span id="verBadge">v11.0</span> <span class="conn-dot" id="connDot" title="Firebase déconnecté"></span></span></div>
-  <div class="header-total">
-    <div class="label">CA de la soirée</div>
-    <div class="amount" id="headerTotal">0,00 €</div>
-  </div>
+  <div class="logo">LUMIIA<span>Caisse du soir — <span id="verBadge">v11.1</span> <span class="conn-dot" id="connDot" title="Firebase déconnecté"></span></span></div>
 </header>
 
 <nav class="tab-nav">
@@ -1071,7 +1105,13 @@
     </div>
   </div>
 
-  <div class="rep-hint" id="repIndic" style="display:none"></div>
+  <div class="part-esp" id="repIndic" style="display:none">
+    <div>
+      <span class="pel">Espèces sur CA total</span>
+      <span class="pes" id="repIndicDetail">—</span>
+    </div>
+    <div class="pev" id="repIndicPct">—</div>
+  </div>
 
   <div class="rep-empty" id="repEmpty" style="display:none">
     Renseigne les TPE puis compte les espèces.<br>La répartition ne porte que sur un écart positif.
@@ -1145,7 +1185,7 @@
 </div>
 
 <script>
-const VERSION = 'v11.0';
+const VERSION = 'v11.1';
 document.getElementById('verBadge').textContent = VERSION;
 
 const DENOMS = [
@@ -1308,7 +1348,6 @@ function render() {
     ? 'CA de la soir\u00e9e'
     : 'CA de la soir\u00e9e (avant comptage)';
   document.getElementById('caTotal').textContent = fmt(s.ca);
-  document.getElementById('headerTotal').textContent = fmt(s.ca);
 
   // ② Comptage
   document.getElementById('recapEsp').textContent     = fmt(s.especesTpe);
@@ -1358,12 +1397,12 @@ function render() {
   const indic = document.getElementById('repIndic');
   const espFin = s.especesTpe + reintegre;
   const caFin  = s.caTpe + reintegre;
-  if (pret && caFin > 0.005) {
-    indic.style.display = 'block';
-    indic.innerHTML = 'Après réintégration : espèces <b>' + fmt(espFin)
-      + '</b> sur un CA de <b>' + fmt(caFin) + '</b><br>soit <b>'
-      + (espFin / caFin * 100).toLocaleString('fr-FR', { maximumFractionDigits: 1 })
-      + ' %</b> du chiffre d\'affaires en espèces.';
+  if (caFin > 0.005) {
+    indic.style.display = 'flex';
+    document.getElementById('repIndicPct').textContent =
+      (espFin / caFin * 100).toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' %';
+    document.getElementById('repIndicDetail').textContent =
+      fmt(espFin) + ' / ' + fmt(caFin);
   } else {
     indic.style.display = 'none';
   }
