@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Caisse LUMIIA — Calcul fond de caisse — v10.3 -->
+<!-- Caisse LUMIIA — Calcul fond de caisse — v11.0 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -928,7 +928,7 @@
 <div class="app-wrapper">
 
 <header>
-  <div class="logo">LUMIIA<span>Caisse du soir — <span id="verBadge">v10.3</span> <span class="conn-dot" id="connDot" title="Firebase déconnecté"></span></span></div>
+  <div class="logo">LUMIIA<span>Caisse du soir — <span id="verBadge">v11.0</span> <span class="conn-dot" id="connDot" title="Firebase déconnecté"></span></span></div>
   <div class="header-total">
     <div class="label">CA de la soirée</div>
     <div class="amount" id="headerTotal">0,00 €</div>
@@ -1031,22 +1031,22 @@
 
   <div class="recap-block" style="margin:0">
     <div class="recap-row">
-      <span class="rl">CA relevé sur les TPE</span>
-      <span class="rv accent" id="repCa">0,00 €</span>
+      <span class="rl">Espèces hors fond de caisse</span>
+      <span class="rv" id="repHorsFond">0,00 €</span>
     </div>
     <div class="recap-row">
-      <span class="rl">Espèces disponibles<br><span style="font-size:10px;color:#666;text-transform:none;letter-spacing:0">(compté sans le fond de caisse)</span></span>
-      <span class="rv blue" id="repDispo">0,00 €</span>
+      <span class="rl">− déjà déclarées sur les TPE</span>
+      <span class="rv" id="repDeclare">0,00 €</span>
     </div>
     <div class="recap-row">
-      <span class="rl">↳ Maximum écartable</span>
-      <span class="rv" id="repPart">—</span>
+      <span class="rl">= Écart à répartir</span>
+      <span class="rv accent" id="repBase">0,00 €</span>
     </div>
   </div>
 
   <div class="rep-slider-block">
     <div class="rep-pct-display" id="repPctVal">20 %</div>
-    <div class="rep-pct-caption">Part du CA à écarter</div>
+    <div class="rep-pct-caption">Part de l'écart à réintégrer</div>
     <input type="range" class="rep-slider" id="repSlider" min="0" max="100" step="1" value="20">
     <div class="rep-ticks"><span>0 %</span><span>25 %</span><span>50 %</span><span>75 %</span><span>100 %</span></div>
     <div class="rep-saved-msg" id="repSavedMsg">✓ Mémorisé sur tous les appareils</div>
@@ -1057,28 +1057,30 @@
   <div class="rep-grid" id="repResults">
     <div class="rep-result keep" id="repKeepCard">
       <div>
-        <span class="rrl">À écarter</span>
-        <span class="rrs" id="repKeepSub">20 % du CA</span>
+        <span class="rrl">À réintégrer</span>
+        <span class="rrs" id="repKeepSub">sur le TPE</span>
       </div>
       <div class="rrv" id="repKeepVal">0,00 €</div>
     </div>
     <div class="rep-result out" id="repOutCard">
       <div>
-        <span class="rrl">Reste en caisse</span>
-        <span class="rrs">= montant ajouté au TPE</span>
+        <span class="rrl">À sortir</span>
+        <span class="rrs">de la caisse</span>
       </div>
       <div class="rrv" id="repOutVal">0,00 €</div>
     </div>
   </div>
 
+  <div class="rep-hint" id="repIndic" style="display:none"></div>
+
   <div class="rep-empty" id="repEmpty" style="display:none">
-    Renseigne les TPE puis compte les espèces — la répartition a besoin des deux.
+    Renseigne les TPE puis compte les espèces.<br>La répartition ne porte que sur un écart positif.
   </div>
 
   <div class="encaisse-block" id="encaisseBlock">
-    <div class="encaisse-title">Encaisser le reste</div>
+    <div class="encaisse-title">Réintégrer sur le TPE</div>
     <div class="setting-row">
-      <label>Montant à ajouter au TPE</label>
+      <label>Montant à taper sur le TPE</label>
       <div class="input-euro" style="max-width:110px">
         <input type="text" id="ajoutInput" inputmode="decimal" autocomplete="off">
         <span class="euro">€</span>
@@ -1143,7 +1145,7 @@
 </div>
 
 <script>
-const VERSION = 'v10.3';
+const VERSION = 'v11.0';
 document.getElementById('verBadge').textContent = VERSION;
 
 const DENOMS = [
@@ -1223,13 +1225,13 @@ function computeState() {
   const totalCompte = coins + bills;
   const attendu = fdc + especesTpe;   // le contrôle porte sur le relevé TPE
   const ecart = totalCompte - attendu;
-  const dispo = Math.max(0, totalCompte - fdc);
-  const aEcarter = caTpe * repPct / 100;
-  const reste = dispo - aEcarter;
-  const pctMax = caTpe > 0.005 ? Math.floor(dispo / caTpe * 100) : 0;
-  const partEspeces = caTpe > 0.005 ? dispo / caTpe * 100 : 0;
+  const horsFond = Math.max(0, totalCompte - fdc);   // espèces présentes au-delà du fond
+  // Les espèces déjà tapées sur les TPE sont déclarées : elles ne sont plus à répartir.
+  // Seul l'écart, c'est-à-dire le surplus non déclaré, se partage.
+  const base = Math.max(0, ecart);
+  const reintegreTheorique = base * repPct / 100;
   return { coins, bills, esp1, cb1, esp2, cb2, especesTpe, especes, cb, caTpe, ca, ajout, fdc,
-           totalCompte, attendu, ecart, dispo, aEcarter, reste, pctMax, partEspeces };
+           totalCompte, attendu, ecart, horsFond, base, reintegreTheorique };
 }
 
 function buildList() {
@@ -1289,9 +1291,9 @@ function montantEncaisse(s) {
   if (s.ajout > 0.005) return s.ajout;
   if (ajoutTouche) {
     const v = parseMontant(document.getElementById('ajoutInput').value);
-    return Math.min(Math.max(0, v), s.dispo);
+    return Math.min(Math.max(0, v), s.base);
   }
-  return Math.max(0, Math.min(s.reste, s.dispo));
+  return Math.max(0, Math.min(s.reintegreTheorique, s.base));
 }
 
 function render() {
@@ -1326,41 +1328,44 @@ function render() {
   ecartEl.className   = 'ecart-value ' + cls;
   bannerEl.className  = 'ecart-banner ' + cls;
 
-  // ③ Répartition
-  document.getElementById('repCa').textContent    = fmt(s.caTpe);
-  document.getElementById('repDispo').textContent = fmt(s.dispo);
-  document.getElementById('repPart').textContent  = s.caTpe > 0.005
-    ? s.pctMax + ' % du CA'
-    : '—';
+  // ③ Répartition — la base est l'ÉCART, pas les espèces hors fond :
+  // les espèces déjà tapées sur les TPE sont déclarées, elles ne se répartissent pas.
+  document.getElementById('repHorsFond').textContent = fmt(s.horsFond);
+  document.getElementById('repDeclare').textContent  = fmt(s.especesTpe);
+  document.getElementById('repBase').textContent     = fmt(s.base);
 
   document.getElementById('repPctVal').textContent = repPct + ' %';
 
-  // Le montant réellement encaissé pilote les deux cartes : ce qui n'est pas
-  // ajouté au TPE est ce qui sort de la caisse. Arrondir l'un déplace l'autre.
-  const encaisse = montantEncaisse(s);
-  const ecarteEff = Math.max(0, s.dispo - encaisse);
-  const pctEff = s.caTpe > 0.005 ? ecarteEff / s.caTpe * 100 : 0;
+  // Le montant réintégré pilote les deux cartes : ce qui n'est pas tapé sur le TPE
+  // est ce qui sort de la caisse. Arrondir l'un déplace l'autre.
+  const reintegre = montantEncaisse(s);
+  const sorti = Math.max(0, s.base - reintegre);
+  const pctEff = s.base > 0.005 ? reintegre / s.base * 100 : 0;
   document.getElementById('repKeepSub').textContent =
-    pctEff.toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' % du CA';
-  document.getElementById('repKeepVal').textContent = fmt(ecarteEff);
-  document.getElementById('repOutVal').textContent  = fmt(encaisse);
+    'sur le TPE — ' + pctEff.toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' % de l\'écart';
+  document.getElementById('repKeepVal').textContent = fmt(reintegre);
+  document.getElementById('repOutVal').textContent  = fmt(sorti);
 
-  const pret = s.caTpe > 0.005 && s.totalCompte > 0.005;
+  const pret = s.base > 0.005;
   document.getElementById('repResults').style.display = pret ? 'grid' : 'none';
   document.getElementById('repEmpty').style.display   = pret ? 'none' : 'block';
+  document.getElementById('repWarning').style.display = 'none';
+  document.getElementById('repSlider').className   = 'rep-slider';
+  document.getElementById('repPctVal').className   = 'rep-pct-display';
+  document.getElementById('repKeepCard').className = 'rep-result keep';
 
-  const over = pret && s.reste < -0.005;
-  document.getElementById('repSlider').className   = 'rep-slider' + (over ? ' over' : '');
-  document.getElementById('repPctVal').className   = 'rep-pct-display' + (over ? ' over' : '');
-  document.getElementById('repKeepCard').className = 'rep-result keep' + (over ? ' over' : '');
-  const warn = document.getElementById('repWarning');
-  if (over) {
-    warn.style.display = 'block';
-    warn.innerHTML = 'Impossible : à ' + repPct + ' % il faudrait écarter <b>' + fmt(s.aEcarter)
-      + '</b> alors que le tiroir ne contient que <b>' + fmt(s.dispo)
-      + '</b> au-delà du fond.<br>Maximum atteignable ce soir : <b>' + s.pctMax + ' %</b>.';
+  // Indicateur : ce que pèseraient les espèces dans le CA après réintégration.
+  const indic = document.getElementById('repIndic');
+  const espFin = s.especesTpe + reintegre;
+  const caFin  = s.caTpe + reintegre;
+  if (pret && caFin > 0.005) {
+    indic.style.display = 'block';
+    indic.innerHTML = 'Après réintégration : espèces <b>' + fmt(espFin)
+      + '</b> sur un CA de <b>' + fmt(caFin) + '</b><br>soit <b>'
+      + (espFin / caFin * 100).toLocaleString('fr-FR', { maximumFractionDigits: 1 })
+      + ' %</b> du chiffre d\'affaires en espèces.';
   } else {
-    warn.style.display = 'none';
+    indic.style.display = 'none';
   }
 
   // Bloc encaissement du reste
@@ -1385,7 +1390,7 @@ function render() {
     done.style.display = 'none';
     document.getElementById('btnArrondir').disabled = !pret;
     if (!ajoutTouche && document.activeElement !== inpE) {
-      inpE.value = pret && s.reste > 0.005 ? toChamp(s.reste) : '';
+      inpE.value = pret && s.reintegreTheorique > 0.005 ? toChamp(s.reintegreTheorique) : '';
     }
   }
 }
@@ -1438,7 +1443,7 @@ document.getElementById('ajoutInput').addEventListener('input', () => { ajoutTou
 document.getElementById('btnArrondir').addEventListener('click', () => {
   const s = computeState();
   const base = montantEncaisse(s);
-  const arrondi = Math.min(Math.max(0, Math.round(base)), Math.floor(s.dispo));
+  const arrondi = Math.min(Math.max(0, Math.round(base)), Math.floor(s.base));
   document.getElementById('ajoutInput').value = arrondi;
   ajoutTouche = true;
   render();
@@ -1575,8 +1580,9 @@ function getSnapshot() {
     especes: r2(s.especes), cb: r2(s.cb), caTpe: r2(s.caTpe), ca: r2(s.ca),
     coins: r2(s.coins), bills: r2(s.bills), totalCompte: r2(s.totalCompte),
     fdc: s.fdc, attendu: r2(s.attendu), ecart: r2(s.ecart),
-    pct: repPct, ecarte: r2(Math.max(0, s.dispo - montantEncaisse(s))),
-    encaisse: r2(montantEncaisse(s)), ecarteTheorique: r2(s.aEcarter),
+    horsFond: r2(s.horsFond), base: r2(s.base), pct: repPct,
+    reintegre: r2(montantEncaisse(s)),
+    sorti: r2(Math.max(0, s.base - montantEncaisse(s))),
     zSimple: r2(s.esp1), zPrint: r2(s.esp2),
     ts: Date.now()
   };
