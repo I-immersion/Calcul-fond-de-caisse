@@ -39,7 +39,7 @@ if [ -z "$SRC" ]; then
   exit 1
 fi
 
-VER=$(sed -n '1,6p' "$SRC" | grep -oE 'v[0-9]+\.[0-9]+' | head -1)
+VER=$(sed -n '1,6p' "$SRC" | grep -oE 'v[0-9]+[.][0-9]+' | head -1)
 if [ -z "$VER" ]; then
   echo "❌ Pas de marqueur de version dans $(basename "$SRC") — fichier non déployé."
   exit 1
@@ -51,7 +51,7 @@ if [ -f "$PROJ/$CIBLE" ] && cmp -s "$SRC" "$PROJ/$CIBLE"; then
   echo "ℹ️  $VER déjà en place, aucune copie nécessaire."
 else
   if [ -f "$PROJ/$CIBLE" ]; then
-    OLD=$(sed -n '1,6p' "$PROJ/$CIBLE" | grep -oE 'v[0-9]+\.[0-9]+' | head -1)
+    OLD=$(sed -n '1,6p' "$PROJ/$CIBLE" | grep -oE 'v[0-9]+[.][0-9]+' | head -1)
     OLD=${OLD:-inconnue}
     cp "$PROJ/$CIBLE" "$PROJ/_versions/index_${OLD}_$(date +%Y%m%d-%H%M%S).html"
     echo "💾 Ancienne version sauvegardée ($OLD)"
@@ -87,5 +87,21 @@ else
   fi
 fi
 
-echo "🌐 $PAGE"
-echo "   (rechargement sans cache pour voir la nouvelle version)"
+echo "⏳ Vérification de la publication (jusqu'à 2 min)..."
+OK=""
+for i in $(seq 1 12); do
+  sleep 10
+  SERVI=$(curl -s -m 10 -H 'Cache-Control: no-cache' "${PAGE}?probe=$(date +%s)" 2>/dev/null | sed -n '1,6p' | grep -oE 'v[0-9]+[.][0-9]+' | head -1)
+  if [ "$SERVI" = "$VER" ]; then OK="oui"; break; fi
+  printf '.'
+done
+echo
+if [ -n "$OK" ]; then
+  echo "✅ $VER EN LIGNE : $PAGE"
+else
+  echo "⚠  Le push a réussi mais GitHub Pages sert encore ${SERVI:-une version illisible}."
+  echo "   Le build a probablement échoué côté GitHub. Ce n'est PAS ton cache."
+  echo "   1. Regarde https://github.com/I-immersion/Calcul-fond-de-caisse/actions"
+  echo "   2. Relance par un commit à vide :"
+  echo "      cd \"$PROJ\" && git commit --allow-empty -m \"relance build pages $VER\" && git push origin HEAD"
+fi

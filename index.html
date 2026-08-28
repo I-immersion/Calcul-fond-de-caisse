@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Caisse LUMIIA — Calcul fond de caisse — v10.2 -->
+<!-- Caisse LUMIIA — Calcul fond de caisse — v10.3 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -928,7 +928,7 @@
 <div class="app-wrapper">
 
 <header>
-  <div class="logo">LUMIIA<span>Caisse du soir — <span id="verBadge">v10.2</span> <span class="conn-dot" id="connDot" title="Firebase déconnecté"></span></span></div>
+  <div class="logo">LUMIIA<span>Caisse du soir — <span id="verBadge">v10.3</span> <span class="conn-dot" id="connDot" title="Firebase déconnecté"></span></span></div>
   <div class="header-total">
     <div class="label">CA de la soirée</div>
     <div class="amount" id="headerTotal">0,00 €</div>
@@ -950,11 +950,11 @@
     <div class="tpe-card-title">TPE 1</div>
     <div class="tpe-row">
       <span class="tpe-dot esp"></span><label>Espèces</label>
-      <div class="input-euro"><input type="number" id="esp1" placeholder="0" inputmode="decimal" min="0"><span class="euro">€</span></div>
+      <div class="input-euro"><input type="text" id="esp1" placeholder="0" inputmode="decimal" autocomplete="off"><span class="euro">€</span></div>
     </div>
     <div class="tpe-row">
       <span class="tpe-dot cb"></span><label>Carte</label>
-      <div class="input-euro"><input type="number" id="cb1" placeholder="0" inputmode="decimal" min="0"><span class="euro">€</span></div>
+      <div class="input-euro"><input type="text" id="cb1" placeholder="0" inputmode="decimal" autocomplete="off"><span class="euro">€</span></div>
     </div>
   </div>
 
@@ -962,11 +962,11 @@
     <div class="tpe-card-title">TPE 2</div>
     <div class="tpe-row">
       <span class="tpe-dot esp"></span><label>Espèces</label>
-      <div class="input-euro"><input type="number" id="esp2" placeholder="0" inputmode="decimal" min="0"><span class="euro">€</span></div>
+      <div class="input-euro"><input type="text" id="esp2" placeholder="0" inputmode="decimal" autocomplete="off"><span class="euro">€</span></div>
     </div>
     <div class="tpe-row">
       <span class="tpe-dot cb"></span><label>Carte</label>
-      <div class="input-euro"><input type="number" id="cb2" placeholder="0" inputmode="decimal" min="0"><span class="euro">€</span></div>
+      <div class="input-euro"><input type="text" id="cb2" placeholder="0" inputmode="decimal" autocomplete="off"><span class="euro">€</span></div>
     </div>
   </div>
 
@@ -990,7 +990,7 @@
   <div class="config-row">
     <label>Fond caisse</label>
     <div class="input-euro">
-      <input type="number" id="fondCaisse" value="400" inputmode="decimal" min="0">
+      <input type="text" id="fondCaisse" value="400" inputmode="decimal" autocomplete="off">
       <span class="euro">€</span>
     </div>
   </div>
@@ -1080,7 +1080,7 @@
     <div class="setting-row">
       <label>Montant à ajouter au TPE</label>
       <div class="input-euro" style="max-width:110px">
-        <input type="number" id="ajoutInput" inputmode="decimal" min="0" step="0.01">
+        <input type="text" id="ajoutInput" inputmode="decimal" autocomplete="off">
         <span class="euro">€</span>
       </div>
       <button class="btn-arrondir" id="btnArrondir">≈ Arrondir</button>
@@ -1111,7 +1111,7 @@
     <div class="setting-row">
       <label>Valeur au démarrage</label>
       <div class="input-euro" style="max-width:130px">
-        <input type="number" id="fdcDefault" inputmode="decimal" min="0" placeholder="400">
+        <input type="text" id="fdcDefault" inputmode="decimal" placeholder="400" autocomplete="off">
         <span class="euro">€</span>
       </div>
     </div>
@@ -1143,7 +1143,7 @@
 </div>
 
 <script>
-const VERSION = 'v10.2';
+const VERSION = 'v10.3';
 document.getElementById('verBadge').textContent = VERSION;
 
 const DENOMS = [
@@ -1184,8 +1184,25 @@ function fmtSigned(n) {
   return (n > 0 ? '+' : '−') + str + ' €';
 }
 
+// Accepte indifféremment 12,50 et 12.50 — les champs sont en type text,
+// car un input[type=number] rejette la virgule sur un clavier français.
+function parseMontant(v) {
+  if (typeof v !== 'string') v = String(v == null ? '' : v);
+  let t = v.replace(/\s/g, '');
+  // Si les deux séparateurs sont présents (1.234,56), le point est un séparateur
+  // de milliers et la virgule la décimale.
+  if (t.indexOf('.') !== -1 && t.indexOf(',') !== -1) t = t.split('.').join('');
+  const n = parseFloat(t.replace(',', '.'));
+  return isNaN(n) ? 0 : n;
+}
+
+// Affichage dans un champ de saisie : virgule décimale, sans séparateur de milliers.
+function toChamp(n) {
+  return String(Math.round(n * 100) / 100).replace('.', ',');
+}
+
 function getNum(id) {
-  return Math.max(0, parseFloat(document.getElementById(id).value) || 0);
+  return Math.max(0, parseMontant(document.getElementById(id).value));
 }
 
 // ── État unique, recalculé à chaque saisie ──
@@ -1271,8 +1288,8 @@ function setCount(i, val) {
 function montantEncaisse(s) {
   if (s.ajout > 0.005) return s.ajout;
   if (ajoutTouche) {
-    const v = parseFloat(document.getElementById('ajoutInput').value);
-    if (!isNaN(v)) return Math.min(Math.max(0, v), s.dispo);
+    const v = parseMontant(document.getElementById('ajoutInput').value);
+    return Math.min(Math.max(0, v), s.dispo);
   }
   return Math.max(0, Math.min(s.reste, s.dispo));
 }
@@ -1353,7 +1370,7 @@ function render() {
   const inpE = document.getElementById('ajoutInput');
   bloc.style.display = pret ? 'flex' : 'none';
   if (s.ajout > 0.005) {
-    inpE.value = r2(s.ajout);
+    inpE.value = toChamp(s.ajout);
     inpE.disabled = true;
     document.getElementById('btnArrondir').disabled = true;
     btnE.textContent = 'Annuler l\'ajout';
@@ -1368,7 +1385,7 @@ function render() {
     done.style.display = 'none';
     document.getElementById('btnArrondir').disabled = !pret;
     if (!ajoutTouche && document.activeElement !== inpE) {
-      inpE.value = pret && s.reste > 0.005 ? r2(s.reste) : '';
+      inpE.value = pret && s.reste > 0.005 ? toChamp(s.reste) : '';
     }
   }
 }
@@ -1388,6 +1405,20 @@ function reset() {
   document.getElementById('ajoutInput').value = '';
   render();
 }
+
+function filtreMontant(el) {
+  el.addEventListener('input', function() {
+    const propre = this.value.replace(/[^0-9.,]/g, '');
+    if (propre !== this.value) {
+      const pos = this.selectionStart - (this.value.length - propre.length);
+      this.value = propre;
+      try { this.setSelectionRange(pos, pos); } catch (e) {}
+    }
+  });
+}
+
+['fondCaisse', 'esp1', 'cb1', 'esp2', 'cb2', 'fdcDefault', 'ajoutInput'].forEach(filtreMontantSurId);
+function filtreMontantSurId(id) { filtreMontant(document.getElementById(id)); }
 
 ['fondCaisse', 'esp1', 'cb1', 'esp2', 'cb2'].forEach(id => {
   const el = document.getElementById(id);
@@ -1419,7 +1450,7 @@ document.getElementById('btnEncaisse').addEventListener('click', () => {
     ajout = 0;
     ajoutTouche = false;
   } else {
-    const v = Math.max(0, parseFloat(document.getElementById('ajoutInput').value) || 0);
+    const v = Math.max(0, parseMontant(document.getElementById('ajoutInput').value));
     if (v < 0.005) return;
     ajout = v;
     ajoutTouche = false;
@@ -1503,7 +1534,7 @@ fdcRef.once('value').then(snap => {
 });
 
 document.getElementById('btnSaveFdc').addEventListener('click', () => {
-  const val = parseFloat(document.getElementById('fdcDefault').value) || 0;
+  const val = Math.max(0, parseMontant(document.getElementById('fdcDefault').value));
   fdcRef.set(val);
   document.getElementById('fondCaisse').value = val;
   render();
